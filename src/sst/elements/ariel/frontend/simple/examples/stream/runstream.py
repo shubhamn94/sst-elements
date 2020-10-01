@@ -1,5 +1,6 @@
 import sst
 import os
+import time
 
 sst.setProgramOption("timebase", "1ps")
 
@@ -8,7 +9,6 @@ app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/
 
 if not os.path.exists(app):
     app = os.getenv( "OMP_EXE" )
-
 ariel = sst.Component("a0", "ariel.ariel")
 ariel.addParams({
         "verbose" : "0",
@@ -23,6 +23,7 @@ ariel.addParams({
 
 memmgr = ariel.setSubComponent("memmgr", "ariel.MemoryManagerSimple")
 
+time.sleep(15)
 
 corecount = 1;
 
@@ -59,7 +60,7 @@ memory_link.connect( (l1cache, "low_network_0", "50ps"), (memctrl, "direct_link"
 
 # Set the Statistic Load Level; Statistics with Enable Levels (set in
 # elementInfoStatistic) lower or equal to the load can be enabled (default = 0)
-sst.setStatisticLoadLevel(5)
+sst.setStatisticLoadLevel(16)
 
 # Set the desired Statistic Output (sst.statOutputConsole is default)
 sst.setStatisticOutput("sst.statOutputConsole")
@@ -80,7 +81,12 @@ ariel.enableStatistics([
 ])
 
 l1cache.enableStatistics([
-      "CacheHits",
+      #"CacheHits",
+      "latency_GetS_hit",
+      "latency_GetX_hit",
+      "latency_GetS_miss",
+      "latency_GetX_miss",
+      "GetSHit_Arrival",
+      "GetSHit_Blocked",
       "CacheMisses"
 ])
-

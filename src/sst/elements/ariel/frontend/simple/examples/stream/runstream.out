@@ -1,0 +1,28 @@
+SSTARIEL: Function profiling is disabled.
+Allocating arrays of size 2000 elements.
+Done allocating arrays.
+Perfoming the fast_c compute loop...
+Sum of arrays is: 6999500.000000
+Freeing arrays...
+Done.
+0:TimingDRAM::build():54:mc=0: number of channels: 1
+0:TimingDRAM::build():55:mc=0: address mapper:     memHierarchy.simpleAddrMapper
+0:TimingDRAM:Channel:Channel():113:mc=0:chan=0: max pending trans: 32
+0:TimingDRAM:Channel:Channel():114:mc=0:chan=0: number of ranks:   2
+0:TimingDRAM:Rank:Rank():223:mc=0:chan=0:rank=0: number of banks: 8
+0:TimingDRAM:Bank:Bank():291:mc=0:chan=0:rank=0:bank=0: CL:           10
+0:TimingDRAM:Bank:Bank():292:mc=0:chan=0:rank=0:bank=0: CL_WR:        12
+0:TimingDRAM:Bank:Bank():293:mc=0:chan=0:rank=0:bank=0: RCD:          10
+0:TimingDRAM:Bank:Bank():294:mc=0:chan=0:rank=0:bank=0: TRP:          14
+0:TimingDRAM:Bank:Bank():295:mc=0:chan=0:rank=0:bank=0: dataCycles:   2
+0:TimingDRAM:Bank:Bank():296:mc=0:chan=0:rank=0:bank=0: transactionQ: memHierarchy.reorderTransactionQ
+0:TimingDRAM:Bank:Bank():297:mc=0:chan=0:rank=0:bank=0: pagePolicy:   memHierarchy.simplePagePolicy
+CORE ID: 0 PROCESSED AN EXIT EVENT
+
+Ariel Memory Management Statistics:
+---------------------------------------------------------------------
+Page Table Sizes:
+- Map entries         140
+Page Table Coverages:
+- Bytes               573440
+Simulation is complete, simulated time: 3.69184 ms

@@ -117,7 +117,7 @@ public:
         {"latency_GetS_miss",           "Latency for read misses", "cycles", 1},
         {"latency_GetS_hit",            "Latency for read hits", "cycles", 1},
         {"latency_GetX_miss",           "Latency for write misses", "cycles", 1},
-        {"latency_GetX_hit",            "Latency for write hits", "cycles", 1},
+        {"latency_GetX_hit_",            "Latency for write hits", "cycles", 1},
         {"latency_GetSX_miss",          "Latency for read-exclusive misses", "cycles", 1},
         {"latency_GetSX_hit",           "Latency for read-exclusive hits", "cycles", 1},
         {"latency_FlushLine",           "Latency for Flush requests", "cycles", 1},
@@ -208,7 +208,7 @@ public:
         stat_eventSent[(int)Command::CustomAck]     = registerStatistic<uint64_t>("eventSent_CustomAck");
         stat_latencyGetS[LatType::HIT] = registerStatistic<uint64_t>("latency_GetS_hit");
         stat_latencyGetS[LatType::MISS] = registerStatistic<uint64_t>("latency_GetS_miss");
-        stat_latencyGetX[LatType::HIT] = registerStatistic<uint64_t>("latency_GetX_hit");
+        stat_latencyGetX[LatType::HIT] = registerStatistic<uint64_t>("latency_GetX_hit_");
         stat_latencyGetX[LatType::MISS] = registerStatistic<uint64_t>("latency_GetX_miss");
         stat_latencyGetSX[LatType::HIT] = registerStatistic<uint64_t>("latency_GetSX_hit");
         stat_latencyGetSX[LatType::MISS] = registerStatistic<uint64_t>("latency_GetSX_miss");
