@@ -136,6 +136,7 @@ class ArielCore : public ComponentExtension {
       }
 
         void setCacheLink(SimpleMem* newCacheLink);
+        void createRtlEvent();
 
 #ifdef HAVE_CUDA
         void createGpuEvent(GpuApi_t API, CudaArguments CA);
@@ -152,6 +153,7 @@ class ArielCore : public ComponentExtension {
         void handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE);
         void handleFlushEvent(ArielFlushEvent *flEv);
         void handleFenceEvent(ArielFenceEvent *fEv);
+        void handleRtlEvent(ArielRtlEvent *RtlEv);
 
 #ifdef HAVE_CUDA
         void handleGpuEvent(ArielGpuEvent* gEv);
@@ -206,6 +208,7 @@ class ArielCore : public ComponentExtension {
 
         SimpleMem* cacheLink;
         ArielTunnel *tunnel;
+        Link* RtlLink;
 
 #ifdef HAVE_CUDA
         Link* GpuLink;

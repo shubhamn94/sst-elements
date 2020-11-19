@@ -703,6 +703,13 @@ bool ArielCore::isCoreStalled() const {
     return isStalled;
 }
 
+void ArielCore::createRtlEvent() {
+    ArielRtlEvent* Ev = new ArielRtlEvent();
+    coreQ->push(Ev);
+
+    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a RTL event.\n"));
+}
+
 #ifdef HAVE_CUDA
 void ArielCore::createGpuEvent(GpuApi_t API, CudaArguments CA) {
     ArielGpuEvent* gEv = new ArielGpuEvent(API, CA);
@@ -893,6 +900,10 @@ bool ArielCore::refillQueue() {
                 createGpuEvent(ac.API.name, ac.API.CA);
                 break;
 #endif
+
+            case ARIEL_ISSUE_RTL:
+                createRtlEvent();
+                break;
             default:
                 // Not sure what this is
                 output->fatal(CALL_INFO, -1, "Error: Ariel did not understand command (%d) provided during instruction queue refill.\n", (int)(ac.command));
@@ -1103,6 +1114,14 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
     // commitFenceEvent();
     statFenceRequests->addData(1);
 }
+
+void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
+
+    RtlEv->set_inp_ctrl_ptr(/*v`oid pointer to malloc'ed area*/);
+    RtlLink->send(RtlEv);
+    return;
+}
+
 
 #ifdef HAVE_CUDA
 // Create an event to send to the GPU Component
@@ -1435,6 +1454,13 @@ bool ArielCore::processNextEvent() {
                 }
                 removeEvent = true;
                 break;
+        
+        case RTL:
+            ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 "next event is RTL (RTLEvent call)\n", coreID));
+            removeEvent = true;
+            handleRtlEvent(dynamic_cast<ArielRtlEvent*>(nextEvent));
+            break;
+
 #ifdef HAVE_CUDA
         case GPU:
             ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 "next event is GPU (CUDA call)\n", coreID));

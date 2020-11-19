@@ -60,6 +60,7 @@ Pin3Frontend::Pin3Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
 #endif
 
     std::string ariel_tool = params.find<std::string>("arieltool", tool_path);
+    std::cout <<"\n"<<ariel_tool<<"\n";
     if("" == ariel_tool) {
         output->fatal(CALL_INFO, -1, "The arieltool parameter specifying which PIN tool to run was not specified\n");
     }

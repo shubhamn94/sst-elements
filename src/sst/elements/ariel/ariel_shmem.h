@@ -62,6 +62,7 @@ enum ArielShmemCmd_t {
     ARIEL_NOOP = 128,
     ARIEL_OUTPUT_STATS = 140,
     ARIEL_ISSUE_CUDA = 144,
+    ARIEL_ISSUE_RTL = 150,
     ARIEL_FLUSHLINE_INSTRUCTION = 154,
     ARIEL_FENCE_INSTRUCTION = 155,
 };
@@ -352,6 +353,14 @@ public:
 };
 
 #endif // Cuda
+
+struct RtlSharedData {
+    TYPEINFO rtl_inp_info;
+    TYPEINFO rtl_ctrl_info;
+    
+    void* rtl_inp_ptr;
+    void* rtl_ctrl_ptr;    
+}
 
 }
 }

@@ -9,9 +9,9 @@ app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/
 
 if not os.path.exists(app):
     app = os.getenv( "OMP_EXE" )
-ariel = sst.Component("a0", "ariel.ariel")
+ariel = sst.Component("Shubham", "ariel.ariel")
 ariel.addParams({
-        "verbose" : "0",
+        "verbose" : "1",
         "maxcorequeue" : "256",
         "maxissuepercycle" : "2",
         "pipetimeout" : "0",
@@ -22,8 +22,6 @@ ariel.addParams({
         })
 
 memmgr = ariel.setSubComponent("memmgr", "ariel.MemoryManagerSimple")
-
-time.sleep(15)
 
 corecount = 1;
 
@@ -70,6 +68,7 @@ sst.setStatisticOutput("sst.statOutputConsole")
 #                                                         "separator" : ", "
 #                                            })
 
+time.sleep(15)
 # Enable Individual Statistics for the Component with output at end of sim
 # Statistic defaults to Accumulator
 ariel.enableStatistics([
