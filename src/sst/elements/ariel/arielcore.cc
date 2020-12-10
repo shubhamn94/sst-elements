@@ -15,6 +15,7 @@
 
 #include <sst_config.h>
 #include "arielcore.h"
+#include "mlm.h"
 
 #ifdef HAVE_CUDA
 #include <../balar/balar_event.h>
@@ -703,8 +704,13 @@ bool ArielCore::isCoreStalled() const {
     return isStalled;
 }
 
-void ArielCore::createRtlEvent() {
+void ArielCore::createRtlEvent(TYPEINFO& inp_info, TYPEINFO& ctrl_info, void* inp_ptr, void* ctrl_ptr, void* updated_params) {
     ArielRtlEvent* Ev = new ArielRtlEvent();
+    Ev->set_rtl_inp_info(inp_info);
+    Ev->set_rtl_ctrl_info(ctrl_info);
+    Ev->set_rtl_inp_ptr(inp_ptr);
+    Ev->set_rtl_ctrl_ptr(ctrl_ptr);
+    Ev->set_updated_rtl_params(updated_params);
     coreQ->push(Ev);
 
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a RTL event.\n"));
@@ -902,7 +908,7 @@ bool ArielCore::refillQueue() {
 #endif
 
             case ARIEL_ISSUE_RTL:
-                createRtlEvent();
+                createRtlEvent(ac.shmem.inp_info, ac.shmem.ctrl_info, ac.shmem.inp_ptr, ac.shmem.ctrl_ptr, ac.shmem.updated_rtl_params);
                 break;
             default:
                 // Not sure what this is
@@ -1117,7 +1123,6 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
 
 void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
 
-    RtlEv->set_inp_ctrl_ptr(/*v`oid pointer to malloc'ed area*/);
     RtlLink->send(RtlEv);
     return;
 }

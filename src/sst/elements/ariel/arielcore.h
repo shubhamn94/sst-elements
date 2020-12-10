@@ -47,6 +47,7 @@
 #include "arielflushev.h"
 #include "arielfenceev.h"
 #include "arielswitchpool.h"
+#include "mlm.h"
 
 #include "ariel_shmem.h"
 #include "arieltracegen.h"
@@ -136,7 +137,7 @@ class ArielCore : public ComponentExtension {
       }
 
         void setCacheLink(SimpleMem* newCacheLink);
-        void createRtlEvent();
+        void createRtlEvent(TYPEINFO&, TYPEINFO&, void*, void*, void*);
 
 #ifdef HAVE_CUDA
         void createGpuEvent(GpuApi_t API, CudaArguments CA);

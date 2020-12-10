@@ -30,6 +30,7 @@
 
 #include <sst/core/interprocess/tunneldef.h>
 #include "ariel_inst_class.h"
+#include "mlm.h"
 
 #ifdef HAVE_CUDA
 #include "gpu_enum.h"
@@ -178,6 +179,13 @@ struct ArielCommand {
             CudaArguments CA;
         } API;
 #endif
+        struct {
+            TYPEINFO inp_info;
+            TYPEINFO ctrl_info;
+            void* inp_ptr;
+            void* ctrl_ptr;
+            void* updated_rtl_params;
+        } shmem;
     };
 };
 
@@ -359,7 +367,8 @@ struct RtlSharedData {
     TYPEINFO rtl_ctrl_info;
     
     void* rtl_inp_ptr;
-    void* rtl_ctrl_ptr;    
+    void* rtl_ctrl_ptr;   
+    void* updated_rtl_params;
 }
 
 }

@@ -19,6 +19,7 @@
 
 #include "arielevent.h"
 #include "ariel_shmem.h"
+#include "mlm.h"
 
 using namespace SST;
 
@@ -27,11 +28,13 @@ namespace ArielComponent {
 
 class ArielRtlEvent : public ArielEvent {
    private:
-      RtlSharedData RtlData;
+      RtlSharedData* RtlData;
 
    public:
-      ArielRtlEvent(/* RtlApi_t API, CudaArguments CA*/) {//api = API; ca = CA;}
-      ~ArielRtlEvent() {}
+      ArielRtlEvent(/* RtlApi_t API, CudaArguments CA*/) {//api = API; ca = CA;
+        RtlData = new RtlSharedData;
+      }
+      ~ArielRtlEvent() { delete RtlData; }
 
       ArielEventType getEventType() const {
          return RTL;
@@ -42,21 +45,44 @@ class ArielRtlEvent : public ArielEvent {
       }*/
 
       void* get_rtl_inp_ptr() {
-          return RtlData.rtl_inp_ptr;
+          return RtlData->rtl_inp_ptr;
       }
 
       void* get_rtl_ctrl_ptr() {
-          return RtlData.rtl_ctrl_ptr;
+          return RtlData->rtl_ctrl_ptr;
       }
 
       TYPEINFO get_rtl_inp_info() {
-          return RtlData.rtl_inp_info;
+          return RtlData->rtl_inp_info;
       }
 
       TYPEINFO get_rtl_ctrl_info() {
-          return RtlData.rtl_ctrl_info;
+          return RtlData->rtl_ctrl_info;
+      }
+      void* get_updated_rtl_params() {
+          return RtlData->updated_rtl_params;
+      }
+
+      void set_rtl_inp_info(TYPEINFO& info) {
+          RtlData->rtl_inp_info = info;
+      }
+
+      void set_rtl_ctrl_info(TYPEINFO& info) {
+          RtlData->rtl_ctrl_info = info;
+      }
+     
+      void set_rtl_inp_ptr(void* setPtr) {
+          RtlData->rtl_inp_ptr = setPtr;
+      }
+
+      void set_rtl_ctrl_ptr(void* setPtr) {
+          RtlData->rtl_ctrl_ptr = setPtr;
       }
       
+      void set_updated_rtl_params(void* setPtr) {
+          RtlData->updated_rtl_params = setPtr;
+      }
+ 
       /*unsigned getFatCubinHandle() {
          return ca.register_function.fat_cubin_handle;
       }
