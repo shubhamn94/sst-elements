@@ -369,7 +369,7 @@ struct RtlSharedData {
     void* rtl_inp_ptr;
     void* rtl_ctrl_ptr;   
     void* updated_rtl_params;
-}
+};
 
 }
 }

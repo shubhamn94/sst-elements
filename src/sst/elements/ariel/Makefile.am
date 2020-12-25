@@ -45,7 +45,8 @@ libariel_la_SOURCES = \
 	arieltracegen.h \
 	arieltexttracegen.h \
 	arieltexttracegen.cc \
-	arielfrontend.h
+	arielfrontend.h \
+	arielrtlev.h
 
 EXTRA_DIST = \
 	frontend/pin3/fesimple.cc \
@@ -147,6 +148,8 @@ if HAVE_PINTOOL
 
 if HAVE_PIN3
 
+INCLUDE_MLM = /home/shubham/ECE633_Independent_Project/shubham/sst-tools/tools/ariel/femlm/api
+
 all-local : fesimple.so
 
 fesimple.so : fesimple.o
@@ -179,6 +182,7 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	    -I$(PINTOOL_DIR)/extras/xed-intel64/include/xed \
 	    -I$(PINTOOL_DIR)/source/tools/Utils \
 	    -I$(PINTOOL_DIR)/source/tools/InstLib \
+		-I$(INCLUDE_MLM) \
 	    -O3 -fomit-frame-pointer -fno-strict-aliasing -c $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 
 install-exec-hook:
