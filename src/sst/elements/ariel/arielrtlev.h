@@ -18,13 +18,24 @@
 #define _H_SST_ARIEL_RTL_EVENT
 
 #include "arielevent.h"
-#include "ariel_shmem.h"
-#include "mlm.h"
+#include <vector>
+#include <string>
+
+typedef std::vector<std::pair<std::string, unsigned int>> TYPEINFO;
 
 using namespace SST;
 
 namespace SST {
 namespace ArielComponent {
+
+typedef struct RtlSharedData {
+    TYPEINFO rtl_inp_info;
+    TYPEINFO rtl_ctrl_info;
+    
+    void* rtl_inp_ptr;
+    void* rtl_ctrl_ptr;   
+    void* updated_rtl_params;
+}RtlSharedData;
 
 class ArielRtlEvent : public ArielEvent {
    private:
@@ -224,7 +235,7 @@ class ArielRtlEvent : public ArielEvent {
       }*/
 };
 
-//}
-//}
+}
+}
 
 #endif

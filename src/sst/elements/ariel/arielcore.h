@@ -47,6 +47,7 @@
 #include "arielflushev.h"
 #include "arielfenceev.h"
 #include "arielswitchpool.h"
+#include "arielrtlev.h"
 #include "mlm.h"
 
 #include "ariel_shmem.h"

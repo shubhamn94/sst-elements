@@ -1,7 +1,10 @@
 
+INCLUDE_MLM = /home/shubham/ECE633_Independent_Project/shubham/sst-tools/tools/ariel/femlm/api
+
 AM_CPPFLAGS = \
         $(MPI_CPPFLAGS) \
-	-I$(top_srcdir)/src 
+	-I$(top_srcdir)/src \
+	-I$(INCLUDE_MLM)
 
 if HAVE_SET_PTRACER
 AM_CPPFLAGS += "-DHAVE_SET_PTRACER=1"
@@ -148,7 +151,6 @@ if HAVE_PINTOOL
 
 if HAVE_PIN3
 
-INCLUDE_MLM = /home/shubham/ECE633_Independent_Project/shubham/sst-tools/tools/ariel/femlm/api
 
 all-local : fesimple.so
 

@@ -27,10 +27,11 @@
  */
 
 #include <inttypes.h>
-
+#include <string>
+#include <vector>
 #include <sst/core/interprocess/tunneldef.h>
 #include "ariel_inst_class.h"
-#include "mlm.h"
+#include <bits/stdc++.h>
 
 #ifdef HAVE_CUDA
 #include "gpu_enum.h"
@@ -43,6 +44,7 @@
 
 #define ARIEL_MAX_PAYLOAD_SIZE 64
 
+typedef std::vector<std::pair<std::string, unsigned int>> TYPEINFO;
 namespace SST {
 namespace ArielComponent {
 
@@ -128,6 +130,16 @@ struct CudaArguments {
 };
 #endif
 
+typedef struct rtlshmem {
+    TYPEINFO inp_info;
+    TYPEINFO ctrl_info; 
+    void* inp_ptr;
+    void* ctrl_ptr;
+    void* updated_rtl_params;
+    rtlshmem() { memset(this, 0, sizeof(*this)); }
+    ~rtlshmem() { }
+} rtlshmem;
+
 struct ArielCommand {
     ArielShmemCmd_t command;
     uint64_t instPtr;
@@ -173,20 +185,18 @@ struct ArielCommand {
         struct {
             uint64_t vaddr;
         } flushline;
+        struct {
+            rtlshmem shmem;
+        } RTLAPI;
 #ifdef HAVE_CUDA
         struct {
             GpuApi_t name;
             CudaArguments CA;
         } API;
 #endif
-        struct {
-            TYPEINFO inp_info;
-            TYPEINFO ctrl_info;
-            void* inp_ptr;
-            void* ctrl_ptr;
-            void* updated_rtl_params;
-        } shmem;
     };
+   // ArielCommand() : shmem() { memset(this, 0, sizeof(*this)); }
+   // ~ArielCommand() { }
 };
 
 struct ArielSharedData {
@@ -361,15 +371,6 @@ public:
 };
 
 #endif // Cuda
-
-struct RtlSharedData {
-    TYPEINFO rtl_inp_info;
-    TYPEINFO rtl_ctrl_info;
-    
-    void* rtl_inp_ptr;
-    void* rtl_ctrl_ptr;   
-    void* updated_rtl_params;
-};
 
 }
 }
