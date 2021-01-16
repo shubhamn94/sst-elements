@@ -37,23 +37,31 @@ typedef struct RtlSharedData {
     void* updated_rtl_params;
 }RtlSharedData;
 
-class ArielRtlEvent : public ArielEvent {
+class ArielRtlEvent : public ArielEvent, public SST::Event {
    private:
       RtlSharedData* RtlData;
+      bool endSim;
+      bool EvRecvAck;
 
    public:
-      ArielRtlEvent(/* RtlApi_t API, CudaArguments CA*/) {//api = API; ca = CA;
+      ArielRtlEvent() : Event() {
         RtlData = new RtlSharedData;
+        endSim = false;
+        EvRecvAck = false;
       }
       ~ArielRtlEvent() { delete RtlData; }
-
+      
+      typedef std::vector<char> dataVec;
+      dataVec payload;
+      
+      void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+          Event::serialize_order(ser);
+          ser & payload;
+      }
+      
       ArielEventType getEventType() const {
          return RTL;
       }
-
-      /*RtlApi_t getRtlApi() {
-         return api;
-      }*/
 
       void* get_rtl_inp_ptr() {
           return RtlData->rtl_inp_ptr;
@@ -74,6 +82,14 @@ class ArielRtlEvent : public ArielEvent {
           return RtlData->updated_rtl_params;
       }
 
+      bool getEndSim() {
+          return endSim;
+      }
+
+      bool getEventRecvAck() {
+          return EvRecvAck;
+      }
+
       void set_rtl_inp_info(TYPEINFO& info) {
           RtlData->rtl_inp_info = info;
       }
@@ -92,6 +108,14 @@ class ArielRtlEvent : public ArielEvent {
       
       void set_updated_rtl_params(void* setPtr) {
           RtlData->updated_rtl_params = setPtr;
+      }
+
+      void setEndSim(bool endIt) {
+          endSim = endIt;
+      }
+
+      void setEventRecvAck(bool EvRecvd) {
+          EvRecvAck = EvRecvd;
       }
  
       /*unsigned getFatCubinHandle() {
@@ -233,6 +257,8 @@ class ArielRtlEvent : public ArielEvent {
       uint64_t getMaxBlockFlag() {
          return ca.max_active_block.flags;
       }*/
+
+      ImplementSerializable(SST::ArielComponent::ArielRtlEvent);
 };
 
 }

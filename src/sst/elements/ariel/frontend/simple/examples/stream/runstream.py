@@ -5,10 +5,12 @@ import time
 sst.setProgramOption("timebase", "1ps")
 
 sst_root = os.getenv( "SST_ROOT" )
-app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
+#app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
+app = "/home/shubham/ECE633_Independent_Project/shubham/sst-tools/tools/ariel/femlm/examples/stream/mlmstream" 
 
 if not os.path.exists(app):
     app = os.getenv( "OMP_EXE" )
+    printf("OS PATH DOESN'T EXIST")
 ariel = sst.Component("Shubham", "ariel.ariel")
 ariel.addParams({
         "verbose" : "1",
@@ -49,12 +51,20 @@ memory.addParams({
         "mem_size" : "2048MiB",
 })
 
+vecshiftregister = sst.Component("vecshiftregister", "vecshiftreg.vecShiftReg")
+vecshiftregister.addParams({
+        "ExecFreq" : "1 GHz",
+        "maxCycles" : "100"
+	})
+
 cpu_cache_link = sst.Link("cpu_cache_link")
 cpu_cache_link.connect( (ariel, "cache_link_0", "50ps"), (l1cache, "high_network_0", "50ps") )
 
 memory_link = sst.Link("mem_bus_link")
 memory_link.connect( (l1cache, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
 
+cpu_rtl_link = sst.Link("cpu_rtl_link")
+cpu_rtl_link.connect( (ariel, "rtl_link_0", "50ps"), (vecshiftregister, "Rtllink", "50ps") )
 
 # Set the Statistic Load Level; Statistics with Enable Levels (set in
 # elementInfoStatistic) lower or equal to the load can be enabled (default = 0)
@@ -68,7 +78,7 @@ sst.setStatisticOutput("sst.statOutputConsole")
 #                                                         "separator" : ", "
 #                                            })
 
-time.sleep(15)
+#time.sleep(15)
 # Enable Individual Statistics for the Component with output at end of sim
 # Statistic defaults to Accumulator
 ariel.enableStatistics([

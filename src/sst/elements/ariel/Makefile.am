@@ -48,8 +48,7 @@ libariel_la_SOURCES = \
 	arieltracegen.h \
 	arieltexttracegen.h \
 	arieltexttracegen.cc \
-	arielfrontend.h \
-	arielrtlev.h
+	arielfrontend.h 
 
 EXTRA_DIST = \
 	frontend/pin3/fesimple.cc \
@@ -96,7 +95,7 @@ libariel_la_CPPFLAGS = \
 	-DARIEL_TRACE_LIB=$(libdir)/sst \
         -DARIEL_TOOL_DIR="$(libexecdir)" \
 	-DPINTOOL_EXECUTABLE="$(PINTOOL_RUNTIME)" \
-	$(CPPFLAGS) $(AM_CPPFLAGS)
+	$(CPPFLAGS) $(AM_CPPFLAGS) 
 
 sstdir = $(includedir)/sst/elements/ariel
 nobase_sst_HEADERS = \
@@ -155,7 +154,7 @@ if HAVE_PIN3
 all-local : fesimple.so
 
 fesimple.so : fesimple.o
-	$(CXX) -shared -Wl,--hash-style=sysv \
+	$(CXX) -g -shared -Wl,--hash-style=sysv \
 	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtbeginS.o \
 	    -Wl,-Bsymbolic -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver -fabi-version=2 \
 	    -o fesimple.so fesimple.o \
@@ -185,7 +184,7 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	    -I$(PINTOOL_DIR)/source/tools/Utils \
 	    -I$(PINTOOL_DIR)/source/tools/InstLib \
 		-I$(INCLUDE_MLM) \
-	    -O3 -fomit-frame-pointer -fno-strict-aliasing -c $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
+	    -O3 -fomit-frame-pointer -fno-strict-aliasing -fpermissive -c $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 
 install-exec-hook:
 	$(MKDIR_P) $(libexecdir)
@@ -200,7 +199,7 @@ else
 all-local : fesimple.so
 
 fesimple.so : fesimple.o
-	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
+	$(CXX) -g -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
 	    -o fesimple.so fesimple.o \
 	    -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
 	    -L$(PINTOOL_DIR)/intel64/lib \
@@ -211,7 +210,7 @@ fesimple.so : fesimple.o
 	    -ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB) $(CUDA_LDFLAGS)
 
 fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) \
+	$(CXX) -g $(CXXFLAGS) $(CPPFLAGS) \
 	    $(LIBZ_CPPFLAGS) \
 	    $(CUDA_CPPFLAGS) \
 	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \

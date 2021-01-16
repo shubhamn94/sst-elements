@@ -145,6 +145,11 @@ void ArielCore::setGpuLink(Link* gpulink) {
 }
 #endif
 
+void ArielCore::setRtlLink(Link* rtllink) {
+    
+    RtlLink = rtllink;
+}
+
 void ArielCore::printTraceEntry(const bool isRead,
             const uint64_t address, const uint32_t length) {
 
@@ -704,10 +709,10 @@ bool ArielCore::isCoreStalled() const {
     return isStalled;
 }
 
-void ArielCore::createRtlEvent(TYPEINFO& inp_info, TYPEINFO& ctrl_info, void* inp_ptr, void* ctrl_ptr, void* updated_params) {
+void ArielCore::createRtlEvent(TYPEINFO* inp_info, TYPEINFO* ctrl_info, void* inp_ptr, void* ctrl_ptr, void* updated_params) {
     ArielRtlEvent* Ev = new ArielRtlEvent();
-    Ev->set_rtl_inp_info(inp_info);
-    Ev->set_rtl_ctrl_info(ctrl_info);
+    Ev->set_rtl_inp_info(*inp_info);
+    Ev->set_rtl_ctrl_info(*ctrl_info);
     Ev->set_rtl_inp_ptr(inp_ptr);
     Ev->set_rtl_ctrl_ptr(ctrl_ptr);
     Ev->set_updated_rtl_params(updated_params);
@@ -1330,6 +1335,30 @@ void ArielCore::handleGpuAckEvent(SST::Event* e){
     }
 }
 #endif
+
+void ArielCore::handleRtlAckEvent(SST::Event* e) {
+    
+    output->verbose(CALL_INFO, 16, 0, "\nAriel received Event from RTL\n");
+    ArielRtlEvent* ev = dynamic_cast<ArielRtlEvent*>(e);
+    if(ev->getEventRecvAck() == true) {
+        output->verbose(CALL_INFO, 16, 0, "\nACK Received from RTL. Inp/Ctrl data signal update successful\n");
+        ev->setEventRecvAck(false);
+    }
+
+    if(ev->getEndSim() == true) {
+        output->verbose(CALL_INFO, 16, 0, "\nRTL simulation Complete\n");
+        //==========================Calculate Simulation time===================================//
+        //                                  xx.xx ns
+        //======================================================================================//
+        
+        //===================Print Outputs and other stats stored in Shmem======================//
+        //                   get the pointers and print the Output: XXXX
+        //======================================================================================//
+    }
+
+    return;    
+}
+
 
 void ArielCore::printCoreStatistics() {
 }

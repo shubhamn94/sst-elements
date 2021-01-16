@@ -31,7 +31,7 @@
 #include <vector>
 #include <sst/core/interprocess/tunneldef.h>
 #include "ariel_inst_class.h"
-#include <bits/stdc++.h>
+//#include <bits/stdc++.h>
 
 #ifdef HAVE_CUDA
 #include "gpu_enum.h"
@@ -130,7 +130,7 @@ struct CudaArguments {
 };
 #endif
 
-typedef struct rtlshmem {
+/*typedef struct rtlshmem {
     TYPEINFO inp_info;
     TYPEINFO ctrl_info; 
     void* inp_ptr;
@@ -138,7 +138,7 @@ typedef struct rtlshmem {
     void* updated_rtl_params;
     rtlshmem() { memset(this, 0, sizeof(*this)); }
     ~rtlshmem() { }
-} rtlshmem;
+} rtlshmem;*/
 
 struct ArielCommand {
     ArielShmemCmd_t command;
@@ -186,8 +186,13 @@ struct ArielCommand {
             uint64_t vaddr;
         } flushline;
         struct {
-            rtlshmem shmem;
-        } RTLAPI;
+            TYPEINFO *inp_info;
+            TYPEINFO *ctrl_info; 
+            void* inp_ptr;
+            void* ctrl_ptr;
+            void* updated_rtl_params;
+            //rtlshmem shmem;
+        } shmem; //RTLAPI;
 #ifdef HAVE_CUDA
         struct {
             GpuApi_t name;
@@ -195,8 +200,14 @@ struct ArielCommand {
         } API;
 #endif
     };
-   // ArielCommand() : shmem() { memset(this, 0, sizeof(*this)); }
-   // ~ArielCommand() { }
+    ArielCommand() : shmem() { 
+        //new(&inp_info) std::vector<std::pair<std::string, unsigned int>>();
+        //new(&ctrl_info) std::vector<std::pair<std::string, unsigned int>>();
+    }//memset(this, 0, sizeof(*this)); }
+    ~ArielCommand() { 
+        //inp_info.~std::vector<std::pair<std::string, unsigned int>>();
+        //ctrl_info.~std::vector<std::pair<std::string, unsigned int>>();
+    }
 };
 
 struct ArielSharedData {
