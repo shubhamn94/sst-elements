@@ -184,7 +184,7 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	    -I$(PINTOOL_DIR)/source/tools/Utils \
 	    -I$(PINTOOL_DIR)/source/tools/InstLib \
 		-I$(INCLUDE_MLM) \
-	    -O3 -fomit-frame-pointer -fno-strict-aliasing -fpermissive -c $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
+	    -O3 -fomit-frame-pointer -fno-strict-aliasing -c $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 
 install-exec-hook:
 	$(MKDIR_P) $(libexecdir)

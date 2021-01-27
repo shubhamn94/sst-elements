@@ -1,5 +1,6 @@
 import sst
 import os
+import time
 
 sst.setProgramOption("timebase", "1ps")
 
@@ -18,10 +19,7 @@ ariel.addParams({
         "pipetimeout" : "0",
         "executable" : app,
         "arielmode" : "1",
-        "arielinterceptcalls" : "1",
         "launchparamcount" : 1,
-        "arielstack" : "1",
-        "mallocmapfile" : "memory_map.log",
         "launchparam0" : "-ifeellucky",
         })
 
@@ -80,6 +78,7 @@ sst.setStatisticOutput("sst.statOutputConsole")
 #                                                         "separator" : ", "
 #                                            })
 
+time.sleep(15)
 # Enable Individual Statistics for the Component with output at end of sim
 # Statistic defaults to Accumulator
 ariel.enableStatistics([

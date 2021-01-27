@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include "atomic.hpp"
 #include <time.h>
+#include <inttypes.h>
 
 #include <string>
 #include <map>
@@ -683,6 +684,7 @@ int mapped_gettimeofday(struct timeval *tp, void *tzp)
 #if ! defined(__APPLE__)
 int mapped_clockgettime(clockid_t clock, struct timespec *tp)
 {
+    std::cout <<"\nThis version of mapped_clockgettime is being executed\n";
     if (!enable_output) {
         struct timeval tv;
         int retval = gettimeofday(&tv, NULL);
@@ -1566,26 +1568,52 @@ void mapped_ariel_malloc_flag(int64_t mallocLocId, int count, int level)
 }
 
 void ariel_start_RTL_sim(RTL_shmem_info* rtl_shmem) {
-    ArielCommand acRtl;
+    
+    fprintf(stderr,"\nMessage to add RTL Event into Ariel Event Queue successfully will be delivered via ArielTunnel");
+    ArielCommand acRtl; 
     acRtl.command = ARIEL_ISSUE_RTL;
-    acRtl.shmem.inp_info = rtl_shmem->get_inp_info();
-    acRtl.shmem.ctrl_info = rtl_shmem->get_ctrl_info();
-    acRtl.shmem.inp_ptr = rtl_shmem->get_inp_ptr();
-    acRtl.shmem.ctrl_ptr = rtl_shmem->get_ctrl_ptr();
-    acRtl.shmem.updated_rtl_params = rtl_shmem->get_updated_rtl_params();
+    //acRtl.shmem.inp_info = rtl_shmem->get_inp_info();
+    //acRtl.shmem.ctrl_info = rtl_shmem->get_ctrl_info();
+    //size_t inp_size = rtl_shmem->get_inp_size();
+    //size_t ctrl_size = rtl_shmem->get_ctrl_size();
+    //size_t updated_params_size = rtl_shmem->get_params_size();
+
+    acRtl.shmem.args.info.inp_ptr = rtl_shmem->get_inp_ptr(); //malloc(inp_size);
+    //memcpy(acRtl.shmem.args.info.inp_ptr, rtl_shmem->get_inp_ptr(), inp_size);
+    //fprintf(stderr, "\ninp_ptr_mlm: %p", rtl_shmem->get_inp_ptr());
+    fprintf(stderr, "\ninp ptr: %p", acRtl.shmem.args.info.inp_ptr);
+
+    acRtl.shmem.args.info.ctrl_ptr = rtl_shmem->get_ctrl_ptr();//malloc(ctrl_size);
+    //memcpy(acRtl.shmem.args.info.ctrl_ptr, rtl_shmem->get_ctrl_ptr(), ctrl_size);
+    //fprintf(stderr, "\nctrl_ptr_mlm: %p", rtl_shmem->get_ctrl_ptr());
+    fprintf(stderr, "\nctrl ptr: %p", acRtl.shmem.args.info.ctrl_ptr);
+
+    acRtl.shmem.args.info.updated_rtl_params = rtl_shmem->get_updated_rtl_params();//malloc(updated_params_size);
+    //memcpy(acRtl.shmem.args.info.updated_rtl_params, rtl_shmem->get_updated_rtl_params(), updated_params_size); 
+    //fprintf(stderr, "\nupdated rtl params: %p\n", rtl_shmem->get_updated_rtl_params());
+    fprintf(stderr, "\nupdated rtl params: %p\n", acRtl.shmem.args.info.updated_rtl_params);
+
+    sleep(20);
+
     THREADID thr = PIN_ThreadId();
     const uint32_t thrID = (uint32_t) thr;
+    bool* ptr = (bool*)acRtl.shmem.args.info.updated_rtl_params;
+    fprintf(stderr, "\n\n %d", *ptr); 
     tunnel->writeMessage(thrID, acRtl);
+    fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue successfully delivered via ArielTunnel");
     
     return;
 }
 
 void ariel_update_RTL_signals() {
+
+    fprintf(stderr,"\nMessage to add RTL Event into Ariel Event Queue to update RTL signals successfully will be delivered via ArielTunnel");
     ArielCommand acRtl;
     acRtl.command = ARIEL_ISSUE_RTL;
     THREADID thr = PIN_ThreadId();
     const uint32_t thrID = (uint32_t) thr;
     tunnel->writeMessage(thrID, acRtl);
+    fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue to update RTL signals successfully delivered via ArielTunnel");
     
     return;
 }

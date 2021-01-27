@@ -29,8 +29,8 @@ namespace SST {
 namespace ArielComponent {
 
 typedef struct RtlSharedData {
-    TYPEINFO rtl_inp_info;
-    TYPEINFO rtl_ctrl_info;
+    TYPEINFO* rtl_inp_info;
+    TYPEINFO* rtl_ctrl_info;
     
     void* rtl_inp_ptr;
     void* rtl_ctrl_ptr;   
@@ -71,11 +71,11 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
           return RtlData->rtl_ctrl_ptr;
       }
 
-      TYPEINFO get_rtl_inp_info() {
+      TYPEINFO* get_rtl_inp_info() {
           return RtlData->rtl_inp_info;
       }
 
-      TYPEINFO get_rtl_ctrl_info() {
+      TYPEINFO* get_rtl_ctrl_info() {
           return RtlData->rtl_ctrl_info;
       }
       void* get_updated_rtl_params() {
@@ -90,11 +90,11 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
           return EvRecvAck;
       }
 
-      void set_rtl_inp_info(TYPEINFO& info) {
+      void set_rtl_inp_info(TYPEINFO* info) {
           RtlData->rtl_inp_info = info;
       }
 
-      void set_rtl_ctrl_info(TYPEINFO& info) {
+      void set_rtl_ctrl_info(TYPEINFO* info) {
           RtlData->rtl_ctrl_info = info;
       }
      

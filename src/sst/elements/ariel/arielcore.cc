@@ -16,6 +16,7 @@
 #include <sst_config.h>
 #include "arielcore.h"
 #include "mlm.h"
+#include <iostream>
 
 #ifdef HAVE_CUDA
 #include <../balar/balar_event.h>
@@ -709,10 +710,12 @@ bool ArielCore::isCoreStalled() const {
     return isStalled;
 }
 
-void ArielCore::createRtlEvent(TYPEINFO* inp_info, TYPEINFO* ctrl_info, void* inp_ptr, void* ctrl_ptr, void* updated_params) {
+void ArielCore::createRtlEvent(/*TYPEINFO* inp_info, TYPEINFO* ctrl_info, */void* inp_ptr, void* ctrl_ptr, void* updated_params) {
     ArielRtlEvent* Ev = new ArielRtlEvent();
-    Ev->set_rtl_inp_info(*inp_info);
-    Ev->set_rtl_ctrl_info(*ctrl_info);
+    //TYPEINFO& rtl_inp_info = *inp_info;
+    //TYPEINFO& rtl_ctrl_info = *ctrl_info;
+    //Ev->set_rtl_inp_info(inp_info);
+    //Ev->set_rtl_ctrl_info(ctrl_info);
     Ev->set_rtl_inp_ptr(inp_ptr);
     Ev->set_rtl_ctrl_ptr(ctrl_ptr);
     Ev->set_updated_rtl_params(updated_params);
@@ -912,8 +915,13 @@ bool ArielCore::refillQueue() {
                 break;
 #endif
 
-            case ARIEL_ISSUE_RTL:
-                createRtlEvent(ac.shmem.inp_info, ac.shmem.ctrl_info, ac.shmem.inp_ptr, ac.shmem.ctrl_ptr, ac.shmem.updated_rtl_params);
+            case ARIEL_ISSUE_RTL: {
+                //bool* ptr = (bool*)ac.shmem.args.info.updated_rtl_params;
+                fprintf(stderr, "\n\n On the Ariel side \n");
+                fprintf(stderr, "inp_ptr: %p", ac.shmem.args.info.inp_ptr);
+                fprintf(stderr, "\nctrl_ptr: %p", ac.shmem.args.info.ctrl_ptr); 
+                fprintf(stderr, "\nupdated_rtl_params: %p\n", ac.shmem.args.info.updated_rtl_params); 
+                createRtlEvent(/*ac.shmem.inp_info, ac.shmem.ctrl_info, */ac.shmem.args.info.inp_ptr, ac.shmem.args.info.ctrl_ptr, ac.shmem.args.info.updated_rtl_params); }
                 break;
             default:
                 // Not sure what this is
@@ -1127,6 +1135,21 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
 }
 
 void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
+
+    bool* ptr = (bool*)RtlEv->get_updated_rtl_params();
+    fprintf(stderr, "\n At the Ariel End, Output is: "); 
+    fprintf(stderr, " %d", *ptr);
+    fprintf(stderr, " %d", *(++ptr));
+    fprintf(stderr, " %d", *(++ptr));
+    fprintf(stderr, " %d", *(++ptr));
+    fprintf(stderr, " %d", *(++ptr));
+    fprintf(stderr, " %d", *(++ptr));
+    fprintf(stderr, " %d", *(++ptr));
+    //output->verbose(CALL_INFO, 1, 0, " %d", *(++ptr));
+    ptr++;
+    uint64_t* cycles = (uint64_t*)ptr;
+    //output->verbose(CALL_INFO, 1, 0, " %" PRIu64, *cycles);
+    fprintf(stderr, " %" PRIu64, *cycles);
 
     RtlLink->send(RtlEv);
     return;
