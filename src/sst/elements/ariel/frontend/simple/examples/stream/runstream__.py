@@ -16,8 +16,12 @@ ariel.addParams({
         "maxissuepercycle" : "2",
         "pipetimeout" : "0",
         "executable" : app,
+        "arielinterceptcalls" : "1",
         "arielmode" : "1",
+        "arielstack" : "1",
         "launchparamcount" : 1,
+        "arielstack" : "1",
+        #"mallocmapfile" : "memory_map.log",
         "launchparam0" : "-ifeellucky",
         })
 

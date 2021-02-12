@@ -17,6 +17,8 @@
 #include "arielcore.h"
 #include "mlm.h"
 #include <iostream>
+#include <exception>
+#include <stdexcept>
 
 #ifdef HAVE_CUDA
 #include <../balar/balar_event.h>
@@ -1136,15 +1138,96 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
 
 void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
 
-    bool* ptr = (bool*)RtlEv->get_updated_rtl_params();
+    uint64_t a = reinterpret_cast<uint64_t>(RtlEv->get_updated_rtl_params());
+    const uint64_t physAddr = memmgr->translateAddress(a);
+    const uint64_t addr_offset  = physAddr % ((uint64_t) cacheLineSize);
+    //const uint64_t writeLength  = std::min((uint64_t) RtlEv->getLength(), cacheLineSize); // Trim to cacheline size (occurs rarely for instructions such as xsave and fxsave)
+
+    /*if((addr_offset + writeLength) <= cacheLineSize) {
+    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
+                            coreID, writeAddress, writeLength));
+
+
+    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing write, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n",
+                            coreID, writeAddress, writeLength, physAddr));
+
+    if( writePayloads ) {
+            uint8_t* payloadPtr = wEv->getPayload();
+            commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, payloadPtr);
+        } else {
+            commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, NULL);
+        }
+    } else {
+        ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
+                            coreID, writeAddress, writeLength));
+
+        // We need to perform a split operation
+        const uint64_t leftAddr = writeAddress;
+        const uint64_t leftSize = cacheLineSize - addr_offset;
+
+        const uint64_t rightAddr = (writeAddress + ((uint64_t) cacheLineSize)) - addr_offset;
+        const uint64_t rightSize = writeLength - leftSize;
+
+        const uint64_t physLeftAddr = physAddr;
+        const uint64_t physRightAddr = memmgr->translateAddress(rightAddr);
+
+        ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address write, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu64 ", RightSize=%" PRIu64 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n",
+                            coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr));
+
+        if(perform_checks > 0) {
+            * if( (leftSize + rightSize) != writeLength ) {
+                output->fatal(CALL_INFO, -4, "Core %" PRIu32 " write request for address %" PRIu64 ", length=%" PRIu64 ", split into left address=%" PRIu64 ", left size=%" PRIu64 ", right address=%" PRIu64 ", right size=%" PRIu64 " does not equal write length (cache line of length %" PRIu64 ")\n",
+                            coreID, writeAddress, writeLength, leftAddr, leftSize, rightAddr, rightSize, cacheLineSize);
+            }*
+
+            if( ((physLeftAddr + leftSize) % cacheLineSize) != 0) {
+                output->fatal(CALL_INFO, -4, "Error leftAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
+                            leftAddr, leftSize, cacheLineSize);
+            }
+
+            *if( ((rightAddr + rightSize) % cacheLineSize) > cacheLineSize ) {
+                output->fatal(CALL_INFO, -4, "Error rightAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
+                            leftAddr, leftSize, cacheLineSize);
+            }*
+        }
+
+        if( writePayloads ) {
+            uint8_t* payloadPtr = wEv->getPayload();
+            commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize, payloadPtr);
+            commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize, &payloadPtr[leftSize]);
+        } else {
+            commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize, NULL);
+            commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize, NULL);
+        }
+        statSplitWriteRequests->addData(1);
+    }
+
+    statWriteRequests->addData(1);
+    statWriteRequestSizes->addData(writeLength);*/
+
+    bool* ptr = (bool*)physAddr;//RtlEv->get_updated_rtl_params();
+
     fprintf(stderr, "\n At the Ariel End, Output is: "); 
+    
     fprintf(stderr, " %d", *ptr);
+    /*auto except_ptr = std::current_exception();
+    try{
+        if(except_ptr) { 
+            std::rethrow_exception(except_ptr);
+        }
+    }
+    catch(const std::exception& e)
+    {
+        std::cout << e.what();
+    }*/
+    /*fprintf(stderr, " %d", *(++ptr));
     fprintf(stderr, " %d", *(++ptr));
     fprintf(stderr, " %d", *(++ptr));
     fprintf(stderr, " %d", *(++ptr));
     fprintf(stderr, " %d", *(++ptr));
-    fprintf(stderr, " %d", *(++ptr));
-    fprintf(stderr, " %d", *(++ptr));
+    fprintf(stderr, " %d", *(++ptr));*/
+    
+    
     //output->verbose(CALL_INFO, 1, 0, " %d", *(++ptr));
     ptr++;
     uint64_t* cycles = (uint64_t*)ptr;

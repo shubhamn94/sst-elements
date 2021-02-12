@@ -978,6 +978,7 @@ VOID ariel_premalloc_instrument(ADDRINT allocSize, ADDRINT ip)
 
 VOID ariel_postmalloc_instrument(ADDRINT allocLocation)
 {
+    static int x = 0;
     if(lastMallocSize >= 0) {
         THREADID currentThread = PIN_ThreadId();
         UINT32 thr = (UINT32) currentThread;
@@ -995,6 +996,10 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation)
             PIN_ReleaseLock(&mallocIndexLock);
             ariel_print_stack(thr, allocationLength, allocLocation, myIndex);
         }
+
+        fprintf(stderr, "\n x is: %d",x);
+        fprintf(stderr, "\nAriel Equivalent Malloc called\n");
+        x++;
 
         ArielCommand ac;
         ac.command = ARIEL_ISSUE_TLM_MAP;
@@ -1588,17 +1593,17 @@ void ariel_start_RTL_sim(RTL_shmem_info* rtl_shmem) {
     //fprintf(stderr, "\nctrl_ptr_mlm: %p", rtl_shmem->get_ctrl_ptr());
     fprintf(stderr, "\nctrl ptr: %p", acRtl.shmem.args.info.ctrl_ptr);
 
-    acRtl.shmem.args.info.updated_rtl_params = rtl_shmem->get_updated_rtl_params();//malloc(updated_params_size);
+    //acRtl.shmem.args.info.updated_rtl_params = rtl_shmem->get_updated_rtl_params();//malloc(updated_params_size);
     //memcpy(acRtl.shmem.args.info.updated_rtl_params, rtl_shmem->get_updated_rtl_params(), updated_params_size); 
     //fprintf(stderr, "\nupdated rtl params: %p\n", rtl_shmem->get_updated_rtl_params());
-    fprintf(stderr, "\nupdated rtl params: %p\n", acRtl.shmem.args.info.updated_rtl_params);
+    //fprintf(stderr, "\nupdated rtl params: %p\n", acRtl.shmem.args.info.updated_rtl_params);
 
-    sleep(20);
+    //sleep(20);
 
     THREADID thr = PIN_ThreadId();
     const uint32_t thrID = (uint32_t) thr;
-    bool* ptr = (bool*)acRtl.shmem.args.info.updated_rtl_params;
-    fprintf(stderr, "\n\n %d", *ptr); 
+    //bool* ptr = (bool*)acRtl.shmem.args.info.updated_rtl_params;
+    //fprintf(stderr, "\n\n %d", *ptr); 
     tunnel->writeMessage(thrID, acRtl);
     fprintf(stderr, "\nMessage to add RTL Event into Ariel Event Queue successfully delivered via ArielTunnel");
     
