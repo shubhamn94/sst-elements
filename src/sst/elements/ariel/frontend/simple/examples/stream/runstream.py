@@ -2,10 +2,9 @@ import sst
 import os
 
 sst.setProgramOption("timebase", "1ps")
-
-sst_root = os.getenv( "SST_ROOT" )
+sst_workdir = os.getenv( "SST_WORKDIR" )
 #app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
-app = "/home/shubham/ECE633_Independent_Project/shubham/sst-tools/tools/ariel/femlm/examples/stream/mlmstream" 
+app = sst_workdir+"/sst-tools/tools/ariel/femlm/examples/stream/mlmstream" 
 
 if not os.path.exists(app):
     app = os.getenv( "OMP_EXE" )
