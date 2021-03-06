@@ -1,5 +1,5 @@
 
-INCLUDE_MLM = /home/shubham/ECE633_Independent_Project/shubham/sst-tools/tools/ariel/femlm/api
+INCLUDE_MLM = $(SST_WORKDIR)/sst-tools/tools/ariel/femlm/api
 
 AM_CPPFLAGS = \
         $(MPI_CPPFLAGS) \
