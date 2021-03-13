@@ -18,7 +18,7 @@ ariel.addParams({
         "pipetimeout" : "0",
         "executable" : app,
         "arielmode" : "1",
-        #"arielinterceptcalls" : "1",
+        "arielinterceptcalls" : "1",
         "launchparamcount" : 1,
         #"arielstack" : "1",
         #"mallocmapfile" : "memory_map.log",

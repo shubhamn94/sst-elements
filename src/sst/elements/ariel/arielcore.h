@@ -181,7 +181,6 @@ class ArielCore : public ComponentExtension {
     private:
         bool processNextEvent();
         bool refillQueue();
-
         bool writePayloads;
         uint32_t coreID;
         uint32_t maxPendingTransactions;

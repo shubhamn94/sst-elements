@@ -897,7 +897,10 @@ bool ArielCore::refillQueue() {
                 break;
 
             case ARIEL_ISSUE_TLM_MAP:
+                static int alloca=0;
                 createAllocateEvent(ac.mlm_map.vaddr, ac.mlm_map.alloc_len, ac.mlm_map.alloc_level, ac.instPtr);
+                alloca++;
+                fprintf(stderr, "\ncreateAllocate called for times: %d", alloca);
                 break;
 
             case ARIEL_ISSUE_TLM_FREE:
@@ -1020,6 +1023,7 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a write event...\n", coreID));
 
     const uint64_t writeAddress = wEv->getAddress();
+    fprintf(stderr, "\n Handle Write request generated for VA: %" PRIu64, writeAddress);
     const uint64_t writeLength  = std::min((uint64_t) wEv->getLength(), cacheLineSize); // Trim to cacheline size (occurs rarely for instructions such as xsave and fxsave)
 
     // No longer neccessary due to trimming above
@@ -1031,6 +1035,7 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 
     // See note in handleReadRequest() on alignment issues
     const uint64_t physAddr = memmgr->translateAddress(writeAddress);
+    fprintf(stderr, "\n Handle Write request generated for PA: %" PRIu64, physAddr);
     const uint64_t addr_offset  = physAddr % ((uint64_t) cacheLineSize);
 
     // We do not need to perform a split operation
@@ -1138,8 +1143,12 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
 
 void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
 
-    uint64_t a = reinterpret_cast<uint64_t>(RtlEv->get_updated_rtl_params());
+    const uint64_t a = reinterpret_cast<uint64_t>(RtlEv->get_rtl_inp_ptr());
+    const uint64_t b = reinterpret_cast<uint64_t>(RtlEv->get_rtl_ctrl_ptr()); 
+    fprintf(stderr, "\nVA of inp_ptr within handleRtl is: %" PRIu64, a);
+    fprintf(stderr, "\nVA of ctrl_ptr within handleRtl is: %" PRIu64, b);
     const uint64_t physAddr = memmgr->translateAddress(a);
+    const uint64_t physAddr_b = memmgr->translateAddress(b);
     const uint64_t addr_offset  = physAddr % ((uint64_t) cacheLineSize);
     //const uint64_t writeLength  = std::min((uint64_t) RtlEv->getLength(), cacheLineSize); // Trim to cacheline size (occurs rarely for instructions such as xsave and fxsave)
 
@@ -1205,11 +1214,9 @@ void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
     statWriteRequests->addData(1);
     statWriteRequestSizes->addData(writeLength);*/
 
-    bool* ptr = (bool*)physAddr;//RtlEv->get_updated_rtl_params();
-
-    fprintf(stderr, "\n At the Ariel End, Output is: "); 
+    fprintf(stderr, "\nPA of inp_ptr within handleRtl is: %" PRIu64, physAddr); 
+    fprintf(stderr, "\nPA of ctrl_ptr within handleRtl is: %" PRIu64, physAddr_b);
     
-    fprintf(stderr, " %d", *ptr);
     /*auto except_ptr = std::current_exception();
     try{
         if(except_ptr) { 
@@ -1229,10 +1236,10 @@ void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
     
     
     //output->verbose(CALL_INFO, 1, 0, " %d", *(++ptr));
-    ptr++;
-    uint64_t* cycles = (uint64_t*)ptr;
+    //ptr++;
+    //uint64_t* cycles = (uint64_t*)ptr;
     //output->verbose(CALL_INFO, 1, 0, " %" PRIu64, *cycles);
-    fprintf(stderr, " %" PRIu64, *cycles);
+    //fprintf(stderr, " %" PRIu64, *cycles);
 
     RtlLink->send(RtlEv);
     return;
