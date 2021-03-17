@@ -1143,16 +1143,24 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
 
 void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
 
-    const uint64_t a = reinterpret_cast<uint64_t>(RtlEv->get_rtl_inp_ptr());
-    const uint64_t b = reinterpret_cast<uint64_t>(RtlEv->get_rtl_ctrl_ptr()); 
-    fprintf(stderr, "\nVA of inp_ptr within handleRtl is: %" PRIu64, a);
-    fprintf(stderr, "\nVA of ctrl_ptr within handleRtl is: %" PRIu64, b);
-    const uint64_t physAddr = memmgr->translateAddress(a);
-    const uint64_t physAddr_b = memmgr->translateAddress(b);
-    const uint64_t addr_offset  = physAddr % ((uint64_t) cacheLineSize);
-    //const uint64_t writeLength  = std::min((uint64_t) RtlEv->getLength(), cacheLineSize); // Trim to cacheline size (occurs rarely for instructions such as xsave and fxsave)
+    const uint64_t inp_VA = reinterpret_cast<uint64_t>(RtlEv->get_rtl_inp_ptr());
+    const uint64_t ctrl_VA = reinterpret_cast<uint64_t>(RtlEv->get_rtl_ctrl_ptr()); 
+    const uint64_t updated_rtl_params_VA = reinterpret_cast<uint64_t>(RtlEv->get_updated_rtl_params());
+    const uint64_t inp_PA = memmgr->translateAddress(inp_VA);
+    const uint64_t ctrl_PA = memmgr->translateAddress(ctrl_VA);
+    const uint64_t updated_rtl_params_PA = memmgr->translateAddress(updated_rtl_params_VA); 
+    RtlEv->set_rtl_inp_PA(inp_PA);
+    RtlEv->set_rtl_ctrl_PA(ctrl_PA);
+    RtlEv->set_updated_rtl_params_PA(updated_rtl_params_PA);
+    RtlEv->set_cachelinesize(cacheLineSize);
 
-    /*if((addr_offset + writeLength) <= cacheLineSize) {
+    //const uint64_t inp_addr_offset  = inp_PA % ((uint64_t) cacheLineSize);
+    //const uint64_t ctrl_addr_offset  = ctrl_PA % ((uint64_t) cacheLineSize);
+    
+
+    const uint64_t ReadLength  = std::min((uint64_t) RtlEv->getLength(), cacheLineSize); // Trim to cacheline size (occurs rarely for instructions such as xsave and fxsave)
+
+    if((addr_offset + ReadLength) <= cacheLineSize) {
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
                             coreID, writeAddress, writeLength));
 
@@ -1212,10 +1220,10 @@ void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
     }
 
     statWriteRequests->addData(1);
-    statWriteRequestSizes->addData(writeLength);*/
+    statWriteRequestSizes->addData(writeLength);
 
-    fprintf(stderr, "\nPA of inp_ptr within handleRtl is: %" PRIu64, physAddr); 
-    fprintf(stderr, "\nPA of ctrl_ptr within handleRtl is: %" PRIu64, physAddr_b);
+    //fprintf(stderr, "\nPA of inp_ptr within handleRtl is: %" PRIu64, physAddr); 
+    //fprintf(stderr, "\nPA of ctrl_ptr within handleRtl is: %" PRIu64, physAddr_b);
     
     /*auto except_ptr = std::current_exception();
     try{

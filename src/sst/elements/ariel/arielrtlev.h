@@ -31,10 +31,26 @@ namespace ArielComponent {
 typedef struct RtlSharedData {
     TYPEINFO* rtl_inp_info;
     TYPEINFO* rtl_ctrl_info;
+
+    uint64_t cacheLineSize;
     
     void* rtl_inp_ptr;
     void* rtl_ctrl_ptr;   
     void* updated_rtl_params;
+
+    uint64_t rtl_inp_VA;
+    uint64_t rtl_ctrl_VA;
+    uint64_t updated_rtl_params_VA;
+
+    uint64_t rtl_inp_PA;
+    uint64_t rtl_ctrl_PA;
+    uint64_t updated_rtl_params_PA;
+
+    size_t rtl_inp_size;
+    size_t rtl_ctrl_size;
+    size_t updated_rtl_params_size;
+    bool update_params;
+
 }RtlSharedData;
 
 class ArielRtlEvent : public ArielEvent, public SST::Event {
@@ -81,6 +97,38 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
       void* get_updated_rtl_params() {
           return RtlData->updated_rtl_params;
       }
+      
+      uint64_t get_rtl_inp_PA() {
+          return RtlData->rtl_inp_PA;
+      }
+
+      uint64_t get_rtl_ctrl_PA() {
+          return RtlData->rtl_ctrl_PA;
+      }
+      
+      uint64_t get_updated_rtl_params_PA() {
+          return RtlData->updated_rtl_params_PA;
+      }
+
+      size_t get_rtl_inp_size() {
+          return RtlData->rtl_inp_size;
+      }
+ 
+      size_t get_rtl_ctrl_size() {
+          return RtlData->rtl_ctrl_size;
+      }
+      
+      size_t get_updated_rtl_params_size() {
+          return RtlData->updated_rtl_params_size;
+      }
+
+      uint64_t get_cachelinesize() {
+          return RtlData->cacheLineSize;
+      }
+
+      bool isUpdate_params() {
+          return RtlData->update_params;
+      }
 
       bool getEndSim() {
           return endSim;
@@ -110,6 +158,38 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
           RtlData->updated_rtl_params = setPtr;
       }
 
+      void set_rtl_inp_PA(uint64_t setPA) {
+          RtlData->rtl_inp_PA = setPA;
+      }
+
+      void set_rtl_ctrl_PA(uint64_t setPA) {
+          RtlData->rtl_ctrl_PA = setPA;
+      }
+      
+      void set_updated_rtl_params_PA(uint64_t setPA) {
+          RtlData->updated_rtl_params_PA = setPA;
+      }
+
+      void set_rtl_inp_size(size_t size) {
+          RtlData->rtl_inp_size = size;
+      }
+ 
+      void set_rtl_ctrl_size(size_t size) {
+          RtlData->rtl_ctrl_size = size;
+      }
+      
+      void set_updated_rtl_params_size(size_t size) {
+          RtlData->updated_rtl_params_size = size;
+      }
+
+      void set_cachelinesize(uint64_t cachelinesize) {
+          RtlData->cacheLineSize = cachelinesize;
+      }
+
+      void set_isUpdate_params(bool update) {
+          RtlData->update_params = update;
+      }
+
       void setEndSim(bool endIt) {
           endSim = endIt;
       }
@@ -118,146 +198,6 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
           EvRecvAck = EvRecvd;
       }
  
-      /*unsigned getFatCubinHandle() {
-         return ca.register_function.fat_cubin_handle;
-      }
-
-      char* getDeviceFun() {
-         return ca.register_function.device_fun;
-      }
-
-      uint64_t getHostFun() {
-         return ca.register_function.host_fun;
-      }
-
-      void** getDevPtr() {
-         return ca.cuda_malloc.dev_ptr;
-      }
-
-      size_t getSize() {
-         printf("%d arielrtlevent\n", ca.cuda_malloc.size);
-         return ca.cuda_malloc.size;
-      }
-
-      uint64_t get_src() {
-         return ca.cuda_memcpy.src;
-      }
-
-      uint64_t get_dst() {
-         return ca.cuda_memcpy.dst;
-      }
-      size_t get_count() {
-         return ca.cuda_memcpy.count;
-      }
-
-      cudaMemcpyKind get_kind() {
-         return ca.cuda_memcpy.kind;
-      }
-
-      uint8_t* get_data() {
-         return ca.cuda_memcpy.data;
-      }
-
-      unsigned int get_gridDimx() {
-         return ca.cfg_call.gdx;
-      }
-
-      unsigned int get_gridDimy() {
-         return ca.cfg_call.gdy;
-      }
-
-      unsigned int get_gridDimz() {
-         return ca.cfg_call.gdz;
-      }
-
-      unsigned int get_blockDimx() {
-         return ca.cfg_call.bdx;
-      }
-
-      unsigned int get_blockDimy() {
-         return ca.cfg_call.bdy;
-      }
-
-      unsigned int get_blockDimz() {
-         return ca.cfg_call.bdz;
-      }
-
-      size_t get_shmem() {
-         return ca.cfg_call.sharedMem;
-      }
-
-      cudaStream_t get_stream() {
-         return ca.cfg_call.stream;
-      }
-
-      uint64_t get_address() {
-         return ca.set_arg.address;
-      }
-
-      uint8_t* get_value() {
-         return ca.set_arg.value;
-      }
-
-      size_t get_size() {
-         return ca.set_arg.size;
-      }
-
-      size_t get_offset() {
-         return ca.set_arg.offset;
-      }
-
-      uint64_t get_func(){
-         return ca.cuda_launch.func;
-      }
-
-      uint64_t get_free_addr(){
-         return ca.free_address;
-      }
-
-      unsigned getVarFatCubinHandle() {
-         return ca.register_var.fatCubinHandle;
-      }
-
-      uint64_t getVarHostVar() {
-         return ca.register_var.hostVar;
-      }
-
-      char* getVarDeviceName() {
-         return ca.register_var.deviceName;
-      }
-
-      int getVarExt() {
-         return ca.register_var.ext;
-      }
-
-      int getVarSize() {
-         return ca.register_var.size;
-      }
-
-      int getVarConstant() {
-         return ca.register_var.constant;
-      }
-
-      int getVarGlobal() {
-         return ca.register_var.global;
-      }
-
-      uint64_t getMaxBlockHostFunc() {
-         return ca.max_active_block.hostFunc;
-      }
-
-      uint64_t getMaxBlockBlockSize() {
-         return ca.max_active_block.blockSize;
-      }
-
-      uint64_t getMaxBlockSMemSize() {
-         return ca.max_active_block.dynamicSMemSize;
-      }
-
-      uint64_t getMaxBlockFlag() {
-         return ca.max_active_block.flags;
-      }*/
-
       ImplementSerializable(SST::ArielComponent::ArielRtlEvent);
 };
 
