@@ -90,6 +90,15 @@ class ArielMemoryManagerCache : public ArielMemoryManager{
         } // End constructor
 
         ~ArielMemoryManagerCache() {};
+        /*std::unordered_map<uint64_t, uint64_t>* get_translationCache() { return translationCache;}
+        uint32_t get_translationCacheEntries() { return translationCacheEntries; }
+        bool translation_enabled() { return translationEnabled;}*/
+        void get_tlb_info(std::unordered_map<uint64_t, uint64_t>* translationcache, uint32_t& translationcacheentries, bool& translationenabled) {
+            translationcache = translationCache;
+            translationcacheentries = translationCacheEntries;
+            translationenabled = translationEnabled;
+            return;
+        }
 
     protected:
         Statistic<uint64_t>* statTranslationCacheHits;

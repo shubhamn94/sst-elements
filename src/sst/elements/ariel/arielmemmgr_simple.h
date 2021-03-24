@@ -52,6 +52,10 @@ class ArielMemoryManagerSimple : public ArielMemoryManagerCache {
 
         uint64_t translateAddress(uint64_t virtAddr);
         void printStats();
+        /*uint64_t get_pageSize();
+        std::unordered_map<uint64_t, uint64_t>* get_pageTable();
+        std::deque<uint64_t>* get_freePages();*/
+        void get_page_info(std::unordered_map<uint64_t, uint64_t>*, std::deque<uint64_t>*, uint64_t&); 
 
     private:
         void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);

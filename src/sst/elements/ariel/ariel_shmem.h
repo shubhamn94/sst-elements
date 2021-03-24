@@ -130,18 +130,6 @@ struct CudaArguments {
 };
 #endif
 
-struct RtlArguments { 
-    union {
-        struct {
-            TYPEINFO* inp_info;
-            TYPEINFO* ctrl_info;
-            void* inp_ptr;
-            void* ctrl_ptr;
-            void* updated_rtl_params;
-       } info;
-    };
-};
-
 struct ArielCommand {
     ArielShmemCmd_t command;
     uint64_t instPtr;
@@ -188,7 +176,14 @@ struct ArielCommand {
             uint64_t vaddr;
         } flushline;
         struct {
-            RtlArguments args;
+            TYPEINFO* inp_info;
+            TYPEINFO* ctrl_info;
+            void* inp_ptr;
+            void* ctrl_ptr;
+            void* updated_rtl_params;
+            size_t inp_size;
+            size_t ctrl_size;
+            size_t updated_rtl_params_size;
         } shmem;
 #ifdef HAVE_CUDA
         struct {
@@ -197,14 +192,6 @@ struct ArielCommand {
         } API;
 #endif
     };
-    //ArielCommand() : shmem() { 
-        //new(&inp_info) std::vector<std::pair<std::string, unsigned int>>();
-        //new(&ctrl_info) std::vector<std::pair<std::string, unsigned int>>();
-    //}//memset(this, 0, sizeof(*this)); }
-    //~ArielCommand() { 
-        //inp_info.~std::vector<std::pair<std::string, unsigned int>>();
-        //ctrl_info.~std::vector<std::pair<std::string, unsigned int>>();
-    //}
 };
 
 struct ArielSharedData {

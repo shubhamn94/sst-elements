@@ -18,6 +18,7 @@
 #define _H_SST_ARIEL_RTL_EVENT
 
 #include "arielevent.h"
+#include <unordered_map>
 #include <vector>
 #include <string>
 
@@ -38,14 +39,21 @@ typedef struct RtlSharedData {
     void* rtl_ctrl_ptr;   
     void* updated_rtl_params;
 
-    uint64_t rtl_inp_VA;
+    std::unordered_map<uint64_t, uint64_t> *pageTable, *translationCache;
+    std::deque<uint64_t>* freePages;
+    uint64_t pageSize;
+    uint32_t translationCacheEntries;
+    bool translationEnabled;
+
+ /*   uint64_t rtl_inp_VA;
     uint64_t rtl_ctrl_VA;
     uint64_t updated_rtl_params_VA;
 
     uint64_t rtl_inp_PA;
     uint64_t rtl_ctrl_PA;
-    uint64_t updated_rtl_params_PA;
+    uint64_t updated_rtl_params_PA;*/
 
+    std::unordered_map<>* PageTable;
     size_t rtl_inp_size;
     size_t rtl_ctrl_size;
     size_t updated_rtl_params_size;
@@ -98,7 +106,7 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
           return RtlData->updated_rtl_params;
       }
       
-      uint64_t get_rtl_inp_PA() {
+/*      uint64_t get_rtl_inp_PA() {
           return RtlData->rtl_inp_PA;
       }
 
@@ -108,7 +116,7 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
       
       uint64_t get_updated_rtl_params_PA() {
           return RtlData->updated_rtl_params_PA;
-      }
+      }*/
 
       size_t get_rtl_inp_size() {
           return RtlData->rtl_inp_size;
@@ -158,7 +166,7 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
           RtlData->updated_rtl_params = setPtr;
       }
 
-      void set_rtl_inp_PA(uint64_t setPA) {
+/*      void set_rtl_inp_PA(uint64_t setPA) {
           RtlData->rtl_inp_PA = setPA;
       }
 
@@ -167,7 +175,7 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
       }
       
       void set_updated_rtl_params_PA(uint64_t setPA) {
-          RtlData->updated_rtl_params_PA = setPA;
+          RtlData->updated_rtl_params_PA = setPA;*/
       }
 
       void set_rtl_inp_size(size_t size) {

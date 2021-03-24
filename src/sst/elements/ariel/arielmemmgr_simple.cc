@@ -177,3 +177,23 @@ void ArielMemoryManagerSimple::printTable() {
     	output->output("---------------------------------------------------------------------\n");
 
 }
+
+/*uint64_t ArielMemoryManagerSimple::get_pageSize() {
+    return pageSize;
+}
+
+std::unordered_map<uint64_t, uint64_t>* ArielMemoryManagerSimple::get_pageTable() {
+    return &pageTable;
+}
+
+std::deque<uint64_t>* ArielMemoryManagerSimple::get_freePages() {
+    return &freePages;
+}*/
+
+void ArielMemoryManagerSimple::get_page_info(std::unordered_map<uint64_t, uint64_t>* pagetable, std::deque<uint64_t>* freepages, uint64_t& pagesize) {
+    pagetable = &pageTable;
+    freepages = &freePages; 
+    pagesize = pageSize;
+
+    return;
+}

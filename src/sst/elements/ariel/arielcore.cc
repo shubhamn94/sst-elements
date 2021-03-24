@@ -712,15 +712,18 @@ bool ArielCore::isCoreStalled() const {
     return isStalled;
 }
 
-void ArielCore::createRtlEvent(/*TYPEINFO* inp_info, TYPEINFO* ctrl_info, */void* inp_ptr, void* ctrl_ptr, void* updated_params) {
+void ArielCore::createRtlEvent(TYPEINFO* inp_info, TYPEINFO* ctrl_info, void* inp_ptr, void* ctrl_ptr, void* updated_params, size_t inp_size, size_t ctrl_size, size_t updated_rtl_params_size) {
     ArielRtlEvent* Ev = new ArielRtlEvent();
     //TYPEINFO& rtl_inp_info = *inp_info;
     //TYPEINFO& rtl_ctrl_info = *ctrl_info;
-    //Ev->set_rtl_inp_info(inp_info);
-    //Ev->set_rtl_ctrl_info(ctrl_info);
+    Ev->set_rtl_inp_info(inp_info);
+    Ev->set_rtl_ctrl_info(ctrl_info);
     Ev->set_rtl_inp_ptr(inp_ptr);
     Ev->set_rtl_ctrl_ptr(ctrl_ptr);
     Ev->set_updated_rtl_params(updated_params);
+    Ev->set_rtl_inp_size(inp_size);
+    Ev->set_rtl_ctrl_size(ctrl_size);
+    Ev->set_updated_rtl_params_size(updated_rtl_params_size);
     coreQ->push(Ev);
 
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a RTL event.\n"));
@@ -920,13 +923,8 @@ bool ArielCore::refillQueue() {
                 break;
 #endif
 
-            case ARIEL_ISSUE_RTL: {
-                //bool* ptr = (bool*)ac.shmem.args.info.updated_rtl_params;
-                fprintf(stderr, "\n\n On the Ariel side \n");
-                fprintf(stderr, "inp_ptr: %p", ac.shmem.args.info.inp_ptr);
-                fprintf(stderr, "\nctrl_ptr: %p", ac.shmem.args.info.ctrl_ptr); 
-                fprintf(stderr, "\nupdated_rtl_params: %p\n", ac.shmem.args.info.updated_rtl_params); 
-                createRtlEvent(/*ac.shmem.inp_info, ac.shmem.ctrl_info, */ac.shmem.args.info.inp_ptr, ac.shmem.args.info.ctrl_ptr, ac.shmem.args.info.updated_rtl_params); }
+            case ARIEL_ISSUE_RTL: 
+                createRtlEvent(ac.shmem.inp_info, ac.shmem.ctrl_info, ac.shmem.inp_ptr, ac.shmem.ctrl_ptr, ac.shmem.updated_rtl_params, ac.shmem.inp_size, ac.shmem.ctrl_size, ac.shmem.updated_rtl_params_size); 
                 break;
             default:
                 // Not sure what this is
@@ -1142,113 +1140,10 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
 }
 
 void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
-
-    const uint64_t inp_VA = reinterpret_cast<uint64_t>(RtlEv->get_rtl_inp_ptr());
-    const uint64_t ctrl_VA = reinterpret_cast<uint64_t>(RtlEv->get_rtl_ctrl_ptr()); 
-    const uint64_t updated_rtl_params_VA = reinterpret_cast<uint64_t>(RtlEv->get_updated_rtl_params());
-    const uint64_t inp_PA = memmgr->translateAddress(inp_VA);
-    const uint64_t ctrl_PA = memmgr->translateAddress(ctrl_VA);
-    const uint64_t updated_rtl_params_PA = memmgr->translateAddress(updated_rtl_params_VA); 
-    RtlEv->set_rtl_inp_PA(inp_PA);
-    RtlEv->set_rtl_ctrl_PA(ctrl_PA);
-    RtlEv->set_updated_rtl_params_PA(updated_rtl_params_PA);
+    
     RtlEv->set_cachelinesize(cacheLineSize);
-
-    //const uint64_t inp_addr_offset  = inp_PA % ((uint64_t) cacheLineSize);
-    //const uint64_t ctrl_addr_offset  = ctrl_PA % ((uint64_t) cacheLineSize);
-    
-
-    const uint64_t ReadLength  = std::min((uint64_t) RtlEv->getLength(), cacheLineSize); // Trim to cacheline size (occurs rarely for instructions such as xsave and fxsave)
-
-    if((addr_offset + ReadLength) <= cacheLineSize) {
-    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
-                            coreID, writeAddress, writeLength));
-
-
-    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing write, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n",
-                            coreID, writeAddress, writeLength, physAddr));
-
-    if( writePayloads ) {
-            uint8_t* payloadPtr = wEv->getPayload();
-            commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, payloadPtr);
-        } else {
-            commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength, NULL);
-        }
-    } else {
-        ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
-                            coreID, writeAddress, writeLength));
-
-        // We need to perform a split operation
-        const uint64_t leftAddr = writeAddress;
-        const uint64_t leftSize = cacheLineSize - addr_offset;
-
-        const uint64_t rightAddr = (writeAddress + ((uint64_t) cacheLineSize)) - addr_offset;
-        const uint64_t rightSize = writeLength - leftSize;
-
-        const uint64_t physLeftAddr = physAddr;
-        const uint64_t physRightAddr = memmgr->translateAddress(rightAddr);
-
-        ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address write, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu64 ", RightSize=%" PRIu64 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n",
-                            coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr));
-
-        if(perform_checks > 0) {
-            * if( (leftSize + rightSize) != writeLength ) {
-                output->fatal(CALL_INFO, -4, "Core %" PRIu32 " write request for address %" PRIu64 ", length=%" PRIu64 ", split into left address=%" PRIu64 ", left size=%" PRIu64 ", right address=%" PRIu64 ", right size=%" PRIu64 " does not equal write length (cache line of length %" PRIu64 ")\n",
-                            coreID, writeAddress, writeLength, leftAddr, leftSize, rightAddr, rightSize, cacheLineSize);
-            }*
-
-            if( ((physLeftAddr + leftSize) % cacheLineSize) != 0) {
-                output->fatal(CALL_INFO, -4, "Error leftAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
-                            leftAddr, leftSize, cacheLineSize);
-            }
-
-            *if( ((rightAddr + rightSize) % cacheLineSize) > cacheLineSize ) {
-                output->fatal(CALL_INFO, -4, "Error rightAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
-                            leftAddr, leftSize, cacheLineSize);
-            }*
-        }
-
-        if( writePayloads ) {
-            uint8_t* payloadPtr = wEv->getPayload();
-            commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize, payloadPtr);
-            commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize, &payloadPtr[leftSize]);
-        } else {
-            commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize, NULL);
-            commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize, NULL);
-        }
-        statSplitWriteRequests->addData(1);
-    }
-
-    statWriteRequests->addData(1);
-    statWriteRequestSizes->addData(writeLength);
-
-    //fprintf(stderr, "\nPA of inp_ptr within handleRtl is: %" PRIu64, physAddr); 
-    //fprintf(stderr, "\nPA of ctrl_ptr within handleRtl is: %" PRIu64, physAddr_b);
-    
-    /*auto except_ptr = std::current_exception();
-    try{
-        if(except_ptr) { 
-            std::rethrow_exception(except_ptr);
-        }
-    }
-    catch(const std::exception& e)
-    {
-        std::cout << e.what();
-    }*/
-    /*fprintf(stderr, " %d", *(++ptr));
-    fprintf(stderr, " %d", *(++ptr));
-    fprintf(stderr, " %d", *(++ptr));
-    fprintf(stderr, " %d", *(++ptr));
-    fprintf(stderr, " %d", *(++ptr));
-    fprintf(stderr, " %d", *(++ptr));*/
-    
-    
-    //output->verbose(CALL_INFO, 1, 0, " %d", *(++ptr));
-    //ptr++;
-    //uint64_t* cycles = (uint64_t*)ptr;
-    //output->verbose(CALL_INFO, 1, 0, " %" PRIu64, *cycles);
-    //fprintf(stderr, " %" PRIu64, *cycles);
-
+    memmgr->get_page_info(RtlEv->RtlData->pageTable, RtlEv->RtlData->freePages, RtlEv->RtlData->pageSize);
+    memmgr->get_tlb_info(RtlEv->RtlData->translationCache, RtlEv->RtlData->translationCacheEntries, Rtl->RtlData->translationEnabled);
     RtlLink->send(RtlEv);
     return;
 }
