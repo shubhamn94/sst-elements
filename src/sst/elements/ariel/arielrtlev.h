@@ -53,7 +53,6 @@ typedef struct RtlSharedData {
     uint64_t rtl_ctrl_PA;
     uint64_t updated_rtl_params_PA;*/
 
-    std::unordered_map<>* PageTable;
     size_t rtl_inp_size;
     size_t rtl_ctrl_size;
     size_t updated_rtl_params_size;
@@ -62,12 +61,11 @@ typedef struct RtlSharedData {
 }RtlSharedData;
 
 class ArielRtlEvent : public ArielEvent, public SST::Event {
-   private:
+   public:
       RtlSharedData* RtlData;
       bool endSim;
       bool EvRecvAck;
 
-   public:
       ArielRtlEvent() : Event() {
         RtlData = new RtlSharedData;
         endSim = false;
@@ -175,8 +173,8 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
       }
       
       void set_updated_rtl_params_PA(uint64_t setPA) {
-          RtlData->updated_rtl_params_PA = setPA;*/
-      }
+          RtlData->updated_rtl_params_PA = setPA;
+      }*/
 
       void set_rtl_inp_size(size_t size) {
           RtlData->rtl_inp_size = size;

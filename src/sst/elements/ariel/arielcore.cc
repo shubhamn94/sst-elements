@@ -1143,7 +1143,7 @@ void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
     
     RtlEv->set_cachelinesize(cacheLineSize);
     memmgr->get_page_info(RtlEv->RtlData->pageTable, RtlEv->RtlData->freePages, RtlEv->RtlData->pageSize);
-    memmgr->get_tlb_info(RtlEv->RtlData->translationCache, RtlEv->RtlData->translationCacheEntries, Rtl->RtlData->translationEnabled);
+    memmgr->get_tlb_info(RtlEv->RtlData->translationCache, RtlEv->RtlData->translationCacheEntries, RtlEv->RtlData->translationEnabled);
     RtlLink->send(RtlEv);
     return;
 }

@@ -59,6 +59,8 @@ vecshiftregister.addParams({
         "maxCycles" : "100"
 	})
 
+rtlmemmgr = vecshiftregister.setSubComponent("memmgr", "rtl.MemoryManagerSimple")
+
 cpu_cache_link = sst.Link("cpu_cache_link")
 cpu_cache_link.connect( (ariel, "cache_link_0", "50ps"), (l1cache, "high_network_0", "50ps") )
 
@@ -66,7 +68,10 @@ memory_link = sst.Link("mem_bus_link")
 memory_link.connect( (l1cache, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
 
 cpu_rtl_link = sst.Link("cpu_rtl_link")
-cpu_rtl_link.connect( (ariel, "rtl_link_0", "50ps"), (vecshiftregister, "Rtllink", "50ps") )
+cpu_rtl_link.connect( (ariel, "rtl_link_0", "50ps"), (vecshiftregister, "ArielRtllink", "50ps") )
+
+rtl_cache_link = sst.Link("rtl_cache_link")
+rtl_cache_link.connect( (vecshiftregister, "RtlCacheLink", "50ps"), (l1cache, "low_network_0", "50ps") )
 
 # Set the Statistic Load Level; Statistics with Enable Levels (set in
 # elementInfoStatistic) lower or equal to the load can be enabled (default = 0)
