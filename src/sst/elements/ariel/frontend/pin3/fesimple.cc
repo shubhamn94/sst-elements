@@ -384,7 +384,7 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADD
     ac.inst.instClass = instClass;
     ac.inst.simdElemCount = simdOpWidth;
 
-    fprintf(stderr, "\nGenerated write request by PIN: %" PRIu64, addr64);
+    //fprintf(stderr, "\nGenerated write request by PIN: %" PRIu64, addr64);
     if( writeTrace ) {
 //      if( writeSize > ARIEL_MAX_PAYLOAD_SIZE ) {
 //          fprintf(stderr, "Error: Payload exceeds maximum size (%d > %d)\n",

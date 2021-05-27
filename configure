@@ -21185,6 +21185,11 @@ fi
 
    dist_element_libraries="$dist_element_libraries simpleSimulation"
 
+   active_element_libraries="$active_element_libraries sst-external-element"
+   ac_config_files="$ac_config_files src/sst/elements/sst-external-element/Makefile"
+
+   dist_element_libraries="$dist_element_libraries sst-external-element"
+
    active_element_libraries="$active_element_libraries thornhill"
    ac_config_files="$ac_config_files src/sst/elements/thornhill/Makefile"
 
@@ -23049,6 +23054,7 @@ do
     "src/sst/elements/shogun/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/shogun/Makefile" ;;
     "src/sst/elements/simpleElementExample/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/simpleElementExample/Makefile" ;;
     "src/sst/elements/simpleSimulation/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/simpleSimulation/Makefile" ;;
+    "src/sst/elements/sst-external-element/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/sst-external-element/Makefile" ;;
     "src/sst/elements/thornhill/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/thornhill/Makefile" ;;
     "src/sst/elements/VaultSimC/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/VaultSimC/Makefile" ;;
     "src/sst/elements/zodiac/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/zodiac/Makefile" ;;

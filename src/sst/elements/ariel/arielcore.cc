@@ -1021,7 +1021,7 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a write event...\n", coreID));
 
     const uint64_t writeAddress = wEv->getAddress();
-    fprintf(stderr, "\n Handle Write request generated for VA: %" PRIu64, writeAddress);
+    //fprintf(stderr, "\n Handle Write request generated for VA: %" PRIu64, writeAddress);
     const uint64_t writeLength  = std::min((uint64_t) wEv->getLength(), cacheLineSize); // Trim to cacheline size (occurs rarely for instructions such as xsave and fxsave)
 
     // No longer neccessary due to trimming above
@@ -1033,7 +1033,7 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 
     // See note in handleReadRequest() on alignment issues
     const uint64_t physAddr = memmgr->translateAddress(writeAddress);
-    fprintf(stderr, "\n Handle Write request generated for PA: %" PRIu64, physAddr);
+    //fprintf(stderr, "\n Handle Write request generated for PA: %" PRIu64, physAddr);
     const uint64_t addr_offset  = physAddr % ((uint64_t) cacheLineSize);
 
     // We do not need to perform a split operation
@@ -1142,9 +1142,15 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
 void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
     
     RtlEv->set_cachelinesize(cacheLineSize);
-    memmgr->get_page_info(RtlEv->RtlData->pageTable, RtlEv->RtlData->freePages, RtlEv->RtlData->pageSize);
+    memmgr->get_page_info(RtlEv->RtlData->pageTable, &RtlEv->RtlData->freePages, RtlEv->RtlData->pageSize);
     memmgr->get_tlb_info(RtlEv->RtlData->translationCache, RtlEv->RtlData->translationCacheEntries, RtlEv->RtlData->translationEnabled);
     RtlLink->send(RtlEv);
+    std::deque<uint64_t> abc = RtlEv->RtlData->freePages;
+    if(!abc.empty()) {
+       fprintf(stderr, "\nFirst Element is: %" PRIu64, abc.front());  
+       fprintf(stderr, "\nLast Element is: %" PRIu64, abc.back());  
+       fprintf(stderr, "\nSize is: %d", abc.size());  
+    }
     return;
 }
 

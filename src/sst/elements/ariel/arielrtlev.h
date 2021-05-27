@@ -20,6 +20,7 @@
 #include "arielevent.h"
 #include <unordered_map>
 #include <vector>
+#include <deque>
 #include <string>
 
 typedef std::vector<std::pair<std::string, unsigned int>> TYPEINFO;
@@ -39,8 +40,9 @@ typedef struct RtlSharedData {
     void* rtl_ctrl_ptr;   
     void* updated_rtl_params;
 
-    std::unordered_map<uint64_t, uint64_t> *pageTable, *translationCache;
-    std::deque<uint64_t>* freePages;
+    std::unordered_map<uint64_t, uint64_t> pageTable; 
+    std::unordered_map<uint64_t, uint64_t> translationCache; 
+    std::deque<uint64_t> freePages;
     uint64_t pageSize;
     uint32_t translationCacheEntries;
     bool translationEnabled;

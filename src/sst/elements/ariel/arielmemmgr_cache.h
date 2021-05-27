@@ -21,7 +21,7 @@
 #include <sst/core/rng/marsaglia.h>
 
 #include <stdint.h>
-#include <deque>
+//#include <deque>
 #include <vector>
 #include <unordered_map>
 
@@ -90,8 +90,8 @@ class ArielMemoryManagerCache : public ArielMemoryManager{
         } // End constructor
 
         ~ArielMemoryManagerCache() {};
-        void get_tlb_info(std::unordered_map<uint64_t, uint64_t>* translationcache, uint32_t& translationcacheentries, bool& translationenabled) {
-            translationcache = translationCache;
+        void get_tlb_info(std::unordered_map<uint64_t, uint64_t>& translationcache, uint32_t& translationcacheentries, bool& translationenabled) {
+            translationcache = *translationCache;
             translationcacheentries = translationCacheEntries;
             translationenabled = translationEnabled;
             return;
