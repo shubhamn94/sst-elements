@@ -53,7 +53,7 @@ class RtlMemoryManager : public SubComponent {
             return 0;
         }
 
-        virtual void AssignRtlMemoryManagerSimple(std::unordered_map<uint64_t, uint64_t>, std::deque<uint64_t>, uint64_t) { }
+        virtual void AssignRtlMemoryManagerSimple(std::unordered_map<uint64_t, uint64_t>, std::deque<uint64_t>*, uint64_t) { }
 
         virtual void AssignRtlMemoryManagerCache(std::unordered_map<uint64_t, uint64_t>, uint32_t, bool) { }
 

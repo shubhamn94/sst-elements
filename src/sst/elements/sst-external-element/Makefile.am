@@ -3,10 +3,12 @@
 #
 HOME = $(SST_WORKDIR)
 INCLUDE = -I$(HOME)/firrtl-sig/ -I$(HOME)/sst-tools/tools/ariel/femlm/api/ -I$(HOME)/sst-elements/src/sst/elements/ariel/
+FLAGS = -fpermissive -std=c++11
 
 AM_CPPFLAGS = \
 	$(MPI_CPPFLAGS) \
-	$(INCLUDE)
+	$(INCLUDE) \
+	$(FLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libvecshiftreg.la

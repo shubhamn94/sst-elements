@@ -15,6 +15,7 @@
 #include "rtlevent.h"
 #include "VecShiftRegister_O1.h"
 #include "rtlmemmgr.h"
+#include <deque>
 
 using namespace SST;
 using namespace std;
@@ -177,7 +178,12 @@ void vecShiftReg::handleArielEvent(SST::Event *event) {
 
     output.verbose(CALL_INFO, 1, 0, "\nVecshiftReg RTL Event handle called \n");
 
-    memmgr->AssignRtlMemoryManagerSimple(ariel_ev->RtlData->pageTable, ariel_ev->RtlData->freePages, ariel_ev->RtlData->pageSize);
+    std::deque<uint64_t>* freePage_pool = new std::deque<uint64_t>(); 
+    memcpy((void*)freePage_pool, (void*)&ariel_ev->RtlData->freePages, sizeof(ariel_ev->RtlData->freePages)); 
+
+    fprintf(stderr, "pageTable size is: %" PRIu64, ariel_ev->RtlData->pageTable.size());
+
+    memmgr->AssignRtlMemoryManagerSimple(ariel_ev->RtlData->pageTable, freePage_pool, ariel_ev->RtlData->pageSize);
     memmgr->AssignRtlMemoryManagerCache(ariel_ev->RtlData->translationCache, ariel_ev->RtlData->translationCacheEntries, ariel_ev->RtlData->translationEnabled);
 
     //Update all the virtual address pointers in RTLEvent class

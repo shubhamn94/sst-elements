@@ -14,6 +14,7 @@
 // distribution.
 
 #include <sst_config.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 #include "rtlmemmgr_simple.h"
@@ -26,10 +27,11 @@ RtlMemoryManagerSimple::RtlMemoryManagerSimple(ComponentId_t id, Params& params)
 RtlMemoryManagerSimple::~RtlMemoryManagerSimple() {
 }
 
-void RtlMemoryManagerSimple::AssignRtlMemoryManagerSimple(std::unordered_map<uint64_t, uint64_t> pagetable, std::deque<uint64_t> freepages, uint64_t pagesize) {
+void RtlMemoryManagerSimple::AssignRtlMemoryManagerSimple(std::unordered_map<uint64_t, uint64_t> pagetable, std::deque<uint64_t>* freepages, uint64_t pagesize) {
     pageTable = pagetable; 
-    freePages = freepages;
+    memcpy((void*)(&freePages), (void*)freepages, sizeof(freepages));
     pageSize = pagesize;
+    fprintf(stderr, "\npageTable size in rtlmemmgr_simple is: %" PRIu64, pageTable.size());
     return; 
 }
 

@@ -46,7 +46,7 @@ class RtlMemoryManagerSimple : public RtlMemoryManagerCache {
 
         uint64_t translateAddress(uint64_t virtAddr);
         void printStats();
-        void AssignRtlMemoryManagerSimple(std::unordered_map<uint64_t, uint64_t>, std::deque<uint64_t>, uint64_t);
+        void AssignRtlMemoryManagerSimple(std::unordered_map<uint64_t, uint64_t>, std::deque<uint64_t>*, uint64_t);
 
     private:
         void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
