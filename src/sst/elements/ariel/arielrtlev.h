@@ -40,8 +40,8 @@ typedef struct RtlSharedData {
     void* rtl_ctrl_ptr;   
     void* updated_rtl_params;
 
-    std::unordered_map<uint64_t, uint64_t> pageTable; 
-    std::unordered_map<uint64_t, uint64_t> translationCache; 
+    std::unordered_map<uint64_t, uint64_t>* pageTable; 
+    std::unordered_map<uint64_t, uint64_t>* translationCache; 
     std::deque<uint64_t> freePages;
     uint64_t pageSize;
     uint32_t translationCacheEntries;
@@ -70,6 +70,8 @@ class ArielRtlEvent : public ArielEvent, public SST::Event {
 
       ArielRtlEvent() : Event() {
         RtlData = new RtlSharedData;
+        RtlData->pageTable = new std::unordered_map<uint64_t, uint64_t>();
+        RtlData->translationCache = new std::unordered_map<uint64_t, uint64_t>();
         endSim = false;
         EvRecvAck = false;
       }

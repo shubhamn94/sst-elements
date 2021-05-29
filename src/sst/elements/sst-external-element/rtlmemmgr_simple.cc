@@ -29,9 +29,11 @@ RtlMemoryManagerSimple::~RtlMemoryManagerSimple() {
 
 void RtlMemoryManagerSimple::AssignRtlMemoryManagerSimple(std::unordered_map<uint64_t, uint64_t> pagetable, std::deque<uint64_t>* freepages, uint64_t pagesize) {
     pageTable = pagetable; 
-    memcpy((void*)(&freePages), (void*)freepages, sizeof(freepages));
+    //fprintf(stderr, "\nfreepages size in rtlmemmgr_simple is: %" PRIu64, freepages->size());
+    memcpy((void*)(&freePages), (void*)freepages, sizeof(*freepages));
+    //fprintf(stderr, "\nfreePages size in rtlmemmgr_simple is: %" PRIu64, freePages.size());
     pageSize = pagesize;
-    fprintf(stderr, "\npageTable size in rtlmemmgr_simple is: %" PRIu64, pageTable.size());
+    //fprintf(stderr, "\npageSize in RtlMemorymanager is: %" PRIu64, pageSize);
     return; 
 }
 
@@ -60,6 +62,7 @@ void RtlMemoryManagerSimple::allocate(const uint64_t size, const uint32_t level,
                     size);
         }
 
+        fprintf(stderr, "\nAllocation, Popping freepages");
         const uint64_t nextPhysPage = freePages.front();
         freePages.pop_front();
 
@@ -95,6 +98,7 @@ uint64_t RtlMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
     auto checkCache = translationCache.find(virtAddr);
     if(checkCache != translationCache.end()) {
         statTranslationCacheHits->addData(1);
+        fprintf(stderr, "\nCacheTranslation successful");
         return checkCache->second;
     }
 
@@ -111,6 +115,7 @@ uint64_t RtlMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
         output->verbose(CALL_INFO, 4, 0, "Page table hit: virtual address=%" PRIu64 " hit, virtual page start=%" PRIu64 ", virtual end=%" PRIu64 ", translates to phys page start=%" PRIu64 " translates to: phys address: %" PRIu64 " (offset added to phys start=%" PRIu64 ")\n",
                 virtAddr, page_itr->first, page_itr->first + pageSize, page_itr->second, physAddr, page_offset);
 
+        fprintf(stderr, "\nPage table hit successful");
         cacheTranslation(virtAddr, physAddr);
         return physAddr;
 
@@ -123,6 +128,7 @@ uint64_t RtlMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
         output->verbose(CALL_INFO, 4, 0, "Page offset calculation (generating a new page allocation request) for address %" PRIu64 ", offset=%" PRIu64 ", requesting virtual map to address: %" PRIu64 "\n",
                 virtAddr, offset, (virtAddr - offset));
 
+        fprintf(stderr, "\nPage table miss. Allocation");
         // Perform an allocation so we can then re-find the address
         allocate(8, 0, virtAddr - offset);
 

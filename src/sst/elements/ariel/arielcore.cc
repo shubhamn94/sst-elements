@@ -196,9 +196,11 @@ void ArielCore::commitWriteEvent(const uint64_t address,
     if(length > 0) {
         SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, address, length);
         req->setVirtualAddress(virtAddress);
+        //fprintf(stderr, "\ncommitWriteEvent Called for Virtual address: %" PRIu64, virtAddress);
+        //fprintf(stderr, "\ncommitWriteEvent length is: %" PRIu32, length);
 
         if( writePayloads ) {
-            if(verbosity >= 16) {
+            //if(verbosity >= 1) {
                 char* buffer = new char[64];
                 std::string payloadString = "";
                 for(int i = 0; i < length; ++i) {
@@ -208,8 +210,13 @@ void ArielCore::commitWriteEvent(const uint64_t address,
 
                 delete[] buffer;
 
-                output->verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s } %p\n",
-                        length, payloadString.c_str(), virtAddress);
+                output->verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s } %p\n", length, payloadString.c_str(), (void*)virtAddress);
+                //fprintf(stderr, "\nWrite-Payload: Len=%" PRIu32 ", Data={ %s } %p\n", length, payloadString.c_str(), virtAddress);
+            //}
+            fprintf(stderr, "\nWriting Payload for address: %" PRIu64, virtAddress);
+            for(int i = 0; i < length; ++i) { 
+                fprintf(stderr, "\n");
+                fprintf(stderr, "%" PRIu8, payload[i]);
             }
             req->setPayload( (uint8_t*) payload, length );
         }
@@ -1145,12 +1152,8 @@ void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
     memmgr->get_page_info(RtlEv->RtlData->pageTable, &RtlEv->RtlData->freePages, RtlEv->RtlData->pageSize);
     memmgr->get_tlb_info(RtlEv->RtlData->translationCache, RtlEv->RtlData->translationCacheEntries, RtlEv->RtlData->translationEnabled);
     RtlLink->send(RtlEv);
-    std::deque<uint64_t> abc = RtlEv->RtlData->freePages;
-    if(!abc.empty()) {
-       fprintf(stderr, "\nFirst Element is: %" PRIu64, abc.front());  
-       fprintf(stderr, "\nLast Element is: %" PRIu64, abc.back());  
-       fprintf(stderr, "\nSize is: %d", abc.size());  
-    }
+    //fprintf(stderr, "Size of rtl_inp_info in handleRtlEvent is: %" PRIu64, RtlEv->RtlData->rtl_inp_info->size());
+    //fprintf(stderr, "Size of rtl_ctrl_info in handleRtlEvent is: %" PRIu64, RtlEv->RtlData->rtl_ctrl_info->size());
     return;
 }
 

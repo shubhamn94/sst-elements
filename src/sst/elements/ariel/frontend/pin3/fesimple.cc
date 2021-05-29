@@ -1579,9 +1579,13 @@ void ariel_start_RTL_sim(RTL_shmem_info* rtl_shmem) {
     acRtl.command = ARIEL_ISSUE_RTL;
     acRtl.shmem.inp_info = rtl_shmem->get_inp_info();
     acRtl.shmem.ctrl_info = rtl_shmem->get_ctrl_info();
+    fprintf(stderr, "\nSize of inp_info in PIN is: %" PRIu64, rtl_shmem->get_inp_info()->size());
+    fprintf(stderr, "\nSize of ctrl_info in PIN is: %" PRIu64, rtl_shmem->get_ctrl_info()->size());
     acRtl.shmem.inp_size = rtl_shmem->get_inp_size();
     acRtl.shmem.ctrl_size = rtl_shmem->get_ctrl_size();
     acRtl.shmem.updated_rtl_params_size = rtl_shmem->get_params_size();
+    fprintf(stderr, "\ninp_size in PIN is: %" PRIu64, acRtl.shmem.inp_size);
+    fprintf(stderr, "\nctrl_size in PIN is: %" PRIu64, acRtl.shmem.ctrl_size);
 
     acRtl.shmem.inp_ptr = rtl_shmem->get_inp_ptr(); 
     acRtl.shmem.ctrl_ptr = rtl_shmem->get_ctrl_ptr();

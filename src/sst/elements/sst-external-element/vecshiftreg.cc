@@ -126,6 +126,11 @@ void vecShiftReg::setup() {
     
 }
 
+void vecShiftReg::init(unsigned int phase) {
+	output.verbose(CALL_INFO, 1, 0, "Component Init Phase Called %d.\n", phase);
+    cacheLink->init(phase);
+}
+
 //Nothing to add in finish as of now. Need to see what could be added.
 void vecShiftReg::finish() {
 	output.verbose(CALL_INFO, 1, 0, "Component is being finished.\n");
@@ -181,10 +186,13 @@ void vecShiftReg::handleArielEvent(SST::Event *event) {
     std::deque<uint64_t>* freePage_pool = new std::deque<uint64_t>(); 
     memcpy((void*)freePage_pool, (void*)&ariel_ev->RtlData->freePages, sizeof(ariel_ev->RtlData->freePages)); 
 
-    fprintf(stderr, "pageTable size is: %" PRIu64, ariel_ev->RtlData->pageTable.size());
+    /*fprintf(stderr, "\npageSize in handleArielEvent is: %" PRIu64, ariel_ev->RtlData->pageSize);
+    fprintf(stderr, "\ntranslationCacheEntries in handleArielEvent is: %" PRIu32, ariel_ev->RtlData->translationCacheEntries);
+    fprintf(stderr, "\ntranslationEnabled in handleArielEvent is: %d", ariel_ev->RtlData->translationEnabled);
+    fprintf(stderr, "\ntranslationCache in handleArielEvent is: %" PRIu64, ariel_ev->RtlData->translationCache->size());*/
 
-    memmgr->AssignRtlMemoryManagerSimple(ariel_ev->RtlData->pageTable, freePage_pool, ariel_ev->RtlData->pageSize);
-    memmgr->AssignRtlMemoryManagerCache(ariel_ev->RtlData->translationCache, ariel_ev->RtlData->translationCacheEntries, ariel_ev->RtlData->translationEnabled);
+    memmgr->AssignRtlMemoryManagerSimple(*ariel_ev->RtlData->pageTable, freePage_pool, ariel_ev->RtlData->pageSize);
+    memmgr->AssignRtlMemoryManagerCache(*ariel_ev->RtlData->translationCache, ariel_ev->RtlData->translationCacheEntries, ariel_ev->RtlData->translationEnabled);
 
     //Update all the virtual address pointers in RTLEvent class
     ev->updated_rtl_params = ariel_ev->get_updated_rtl_params();
@@ -200,6 +208,7 @@ void vecShiftReg::handleArielEvent(SST::Event *event) {
     RtlReadEvent* rtlrev_ctrl_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_ctrl_ptr(),(uint32_t)ariel_ev->get_rtl_ctrl_size()); 
     RtlReadEvent* rtlrev_inp_info = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_inp_info(),(uint32_t)sizeof(*(ariel_ev->get_rtl_inp_info()))); 
     RtlReadEvent* rtlrev_ctrl_info = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_ctrl_info(),(uint32_t)sizeof(*(ariel_ev->get_rtl_ctrl_info()))); 
+    fprintf(stderr, "\nVirtual address in handleArielEvent is: %" PRIu64, (uint64_t)ariel_ev->get_updated_rtl_params());
 
     size_t size = ariel_ev->get_updated_rtl_params_size() + ariel_ev->get_rtl_inp_size() + ariel_ev->get_rtl_ctrl_size() + (size_t)sizeof(ariel_ev->get_rtl_inp_info()) + (size_t)sizeof(ariel_ev->get_rtl_ctrl_info());
     uint8_t* data = (uint8_t*)malloc(size);
@@ -263,12 +272,14 @@ void vecShiftReg::handleMemEvent(SimpleMem::Request* event) {
     if(find_entry != pendingTransactions->end()) {
         output.verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n", (uint32_t) pendingTransactions->size());
        
+        fprintf(stderr, "\nVirtual address in handleMemEvent is: %" PRIu64, event->virtualAddr);
         //int index = event->getVirtualAddress() - getBaseDataAddress();
         int index = getDataAddress() - getBaseDataAddress();
         int i;
         //Actual reading of data from memEvent and storing it to getDataAddress
         for(i = 0; i < event->data.size(); i++)
-            getDataAddress()[index+i] = event->data[i]; 
+            fprintf(stderr, "\nOutput is: %" PRIu8, event->data[i]); 
+        //getDataAddress()[index+i] = event->data[i]; 
 
         setDataAddress(getDataAddress()+index+i);
         if(event->getVirtualAddress() == (uint64_t)ev->updated_rtl_params) {

@@ -35,6 +35,7 @@ public:
     ~vecShiftReg();
 
 	void setup();
+    void init(unsigned int);
 	void finish();
 
 	bool clockTick( SST::Cycle_t currentCycle );
@@ -67,8 +68,8 @@ public:
 
     //Default will be single port for communicating with Ariel CPU. Need to see the requirement/use-case of multi-port design and how to incorporate it in our parser tool.  
     SST_ELI_DOCUMENT_PORTS(
-        {"ArielRtllink", "Link to the vecShiftReg", { "vecShiftReg.RTLEvent", "" } },
-        {"RtlCacheLink", "Link to Cache", {"memHierarchy.simpleMem" , ""} }
+        {"ArielRtllink", "Link to the vecShiftReg", { /*"vecShiftReg.RTLEvent", "" */} },
+        {"RtlCacheLink", "Link to Cache", {"memHierarchy.memInterface" , ""} }
     )
     
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(

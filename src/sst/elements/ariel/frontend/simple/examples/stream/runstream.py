@@ -1,6 +1,7 @@
 import sst
 import os
 
+clock = "2GHz"
 sst.setProgramOption("timebase", "1ps")
 
 sst_root = os.getenv( "SST_ROOT" )
@@ -20,6 +21,7 @@ ariel.addParams({
         "arielmode" : "1",
         "arielinterceptcalls" : "1",
         "launchparamcount" : 1,
+        "writepayloadtrace" : 1,
         #"arielstack" : "1",
         #"mallocmapfile" : "memory_map.log",
         "launchparam0" : "-ifeellucky",
@@ -29,8 +31,30 @@ memmgr = ariel.setSubComponent("memmgr", "ariel.MemoryManagerSimple")
 
 corecount = 1;
 
-l1cache = sst.Component("l1cache", "memHierarchy.Cache")
-l1cache.addParams({
+rtl = sst.Component("vecshiftregister", "vecshiftreg.vecShiftReg")
+rtl.addParams({
+        "ExecFreq" : "1 GHz",
+        "maxCycles" : "100"
+	})
+
+rtlmemmgr = rtl.setSubComponent("memmgr", "vecshiftregister.MemoryManagerSimple")
+
+l1cpucache = sst.Component("l1cpucache", "memHierarchy.Cache")
+l1cpucache.addParams({
+        "cache_frequency" : "2 Ghz",
+        "cache_size" : "64 KB",
+        "cache_type" : "inclusive",
+        "coherence_protocol" : "MSI",
+        "replacement_policy" : "lru",
+        "associativity" : "8",
+        "access_latency_cycles" : "1",
+        "cache_line_size" : "64",
+        "L1" : "1",
+        "debug" : "0",
+})
+
+l1rtlcache = sst.Component("l1rtlcache", "memHierarchy.Cache")
+l1rtlcache.addParams({
         "cache_frequency" : "2 Ghz",
         "cache_size" : "64 KB",
         "coherence_protocol" : "MSI",
@@ -41,6 +65,39 @@ l1cache.addParams({
         "L1" : "1",
         "debug" : "0",
 })
+
+# Bus between private L1s and L2
+membus = sst.Component("membus", "memHierarchy.Bus")
+membus.addParams( { "bus_frequency" : clock } )
+
+cpu_cache_link = sst.Link("cpu_cache_link")
+cpu_cache_link.connect( (ariel, "cache_link_0", "50ps"), (l1cpucache, "high_network_0", "50ps") )
+
+rtl_cache_link = sst.Link("rtl_cache_link")
+rtl_cache_link.connect( (rtl, "RtlCacheLink", "50ps"), (l1rtlcache, "high_network_0", "50ps") )
+
+l1cpu_bus_link = sst.Link("l1cpu_bus_link")
+l1cpu_bus_link.connect( (l1cpucache, "low_network_0", "50ps"), (membus, "high_network_0", "50ps") )
+
+l1rtl_bus_link = sst.Link("l1rtl_bus_link")
+l1rtl_bus_link.connect( (l1rtlcache, "low_network_0", "50ps"), (membus, "high_network_1", "50ps") )
+
+# Shared L2
+# 1MB*cores, 16-way set associative, 64B line, 15 cycle access
+# MSI coherence with NMRU (not-most-recently-used) replacement
+l2 = sst.Component("l2cache", "memHierarchy.Cache")
+l2.addParams( {
+    "cache_frequency" : clock,
+    "access_latency_cycles" : 15,
+    "cache_size" : str(corecount) + "MB",   # 1MB/core
+    "associativity" : 16,
+    "cache_line_size" : 64,
+    "replacement_policy" : "nmru",
+    "coherence_protocol" : "MSI"
+} )
+
+l2_bus_link = sst.Link("l2_bus_link")
+l2_bus_link.connect( (l2, "high_network_0", "50ps"), (membus, "low_network_0", "50ps") )
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
@@ -53,25 +110,11 @@ memory.addParams({
         "mem_size" : "2048MiB",
 })
 
-rtl = sst.Component("vecshiftregister", "vecshiftreg.vecShiftReg")
-rtl.addParams({
-        "ExecFreq" : "1 GHz",
-        "maxCycles" : "100"
-	})
-
-rtlmemmgr = rtl.setSubComponent("memmgr", "vecshiftregister.MemoryManagerSimple")
-
-cpu_cache_link = sst.Link("cpu_cache_link")
-cpu_cache_link.connect( (ariel, "cache_link_0", "50ps"), (l1cache, "high_network_0", "50ps") )
-
-memory_link = sst.Link("mem_bus_link")
-memory_link.connect( (l1cache, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
-
 cpu_rtl_link = sst.Link("cpu_rtl_link")
 cpu_rtl_link.connect( (ariel, "rtl_link_0", "50ps"), (rtl, "ArielRtllink", "50ps") )
 
-rtl_cache_link = sst.Link("rtl_cache_link")
-rtl_cache_link.connect( (rtl, "RtlCacheLink", "50ps"), (l1cache, "high_network_0", "50ps") )
+memory_link = sst.Link("mem_bus_link")
+memory_link.connect( (l2, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
 
 # Set the Statistic Load Level; Statistics with Enable Levels (set in
 # elementInfoStatistic) lower or equal to the load can be enabled (default = 0)
@@ -95,7 +138,7 @@ ariel.enableStatistics([
       "write_requests"
 ])
 
-l1cache.enableStatistics([
+l1cpucache.enableStatistics([
       #"CacheHits",
       "latency_GetS_hit",
       "latency_GetX_hit",

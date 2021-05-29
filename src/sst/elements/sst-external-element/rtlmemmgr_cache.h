@@ -23,6 +23,7 @@
 #include <stdint.h>
 //#include <deque>
 #include <vector>
+#include <inttypes.h>
 //#include <unordered_map>
 
 #include "rtlmemmgr.h"
@@ -72,6 +73,10 @@ class RtlMemoryManagerCache : public RtlMemoryManager{
             translationCache = Cache;
             translationCacheEntries = CacheEntries;
             translationEnabled = Enabled;
+            /*fprintf(stderr, "\ntranslationCache size in RtlMemorymanager is: %" PRIu64, translationCache.size());
+            fprintf(stderr, "\ntranslationCacheEntries in RtlMemorymanager is: %" PRIu32, translationCacheEntries);
+            fprintf(stderr, "\ntranslationEnabled in RtlMemorymanager is: %d", translationEnabled);*/
+
             return;
         }
 
