@@ -97,6 +97,7 @@ private:
     Interfaces::SimpleMem* cacheLink;
     void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
     void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length, const uint8_t* payload);
+    void sendArielEvent();
     
     TimeConverter* timeConverter;
     bool writePayloads;
@@ -107,6 +108,7 @@ private:
     SST::ArielComponent::ArielRtlEvent* RtlAckEv;
     uint64_t inp_VA, ctrl_VA, updated_rtl_params_VA, inp_PA, ctrl_PA, updated_rtl_params_PA;
     size_t inp_size, ctrl_size, updated_rtl_params_size;
+    void* inp_ptr = nullptr;
     RtlMemoryManager* memmgr;
 
     std::unordered_map<Interfaces::SimpleMem::Request::id_t, Interfaces::SimpleMem::Request*>* pendingTransactions;

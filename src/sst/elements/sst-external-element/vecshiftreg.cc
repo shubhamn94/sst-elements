@@ -33,7 +33,7 @@ vecShiftReg::vecShiftReg(SST::ComponentId_t id, SST::Params& params) :
     RtlAckEv = new ArielComponent::ArielRtlEvent();
 	output.init("vecShiftReg-" + getName() + "-> ", 1, 0, SST::Output::STDOUT);
 
-	RTLClk  = params.find<std::string>("ExecFreq", "a" , found);
+	RTLClk  = params.find<std::string>("ExecFreq", "1GHz" , found);
     if (!found) {
         Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find work per cycle\n");
     }
@@ -198,6 +198,8 @@ void vecShiftReg::handleArielEvent(SST::Event *event) {
     ev->updated_rtl_params = ariel_ev->get_updated_rtl_params();
     ev->inp_ptr = ariel_ev->get_rtl_inp_ptr(); 
     ev->inp_info = ariel_ev->get_rtl_inp_info();
+    inp_ptr = ariel_ev->get_rtl_inp_ptr();
+    inp_size = ariel_ev->RtlData->rtl_inp_size;
     ev->ctrl_ptr = ariel_ev->get_rtl_ctrl_ptr(); 
     ev->ctrl_info = ariel_ev->get_rtl_ctrl_info();
     cacheLineSize = ariel_ev->RtlData->cacheLineSize;
@@ -220,6 +222,7 @@ void vecShiftReg::handleArielEvent(SST::Event *event) {
     generateReadRequest(rtlrev_ctrl_ptr);
     generateReadRequest(rtlrev_inp_info);
     generateReadRequest(rtlrev_ctrl_info);
+    sendArielEvent();
 }
 
 /*void vecShiftReg::updateRtlsignals(uint64_t* address) {
@@ -264,6 +267,15 @@ void vecShiftReg::handleArielEvent(SST::Event *event) {
     dut->eval(update_registers, verbose, done_reset);
 
 }*/
+
+void vecShiftReg::sendArielEvent() {
+     
+    RtlAckEv = new ArielComponent::ArielRtlEvent();
+    RtlAckEv->RtlData->rtl_inp_ptr = inp_ptr;
+    RtlAckEv->RtlData->rtl_inp_size = inp_size;
+    ArielRtlLink->send(RtlAckEv);
+    return;
+}
 
 void vecShiftReg::handleMemEvent(SimpleMem::Request* event) {
     output.verbose(CALL_INFO, 4, 0, " handling a memory event in VecShiftRegister.\n");

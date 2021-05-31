@@ -1599,10 +1599,19 @@ void ariel_start_RTL_sim(RTL_shmem_info* rtl_shmem) {
     return;
 }
 
-void ariel_update_RTL_signals() {
+void ariel_update_RTL_signals(RTL_shmem_info* rtl_shmem) {
 
     ArielCommand acRtl;
     acRtl.command = ARIEL_ISSUE_RTL;
+    acRtl.shmem.inp_info = rtl_shmem->get_inp_info();
+    acRtl.shmem.ctrl_info = rtl_shmem->get_ctrl_info();
+    acRtl.shmem.inp_size = rtl_shmem->get_inp_size();
+    acRtl.shmem.ctrl_size = rtl_shmem->get_ctrl_size();
+    acRtl.shmem.updated_rtl_params_size = rtl_shmem->get_params_size();
+    acRtl.shmem.inp_ptr = rtl_shmem->get_inp_ptr(); 
+    acRtl.shmem.ctrl_ptr = rtl_shmem->get_ctrl_ptr();
+    acRtl.shmem.updated_rtl_params = rtl_shmem->get_updated_rtl_params();
+
     THREADID thr = PIN_ThreadId();
     const uint32_t thrID = (uint32_t) thr;
     tunnel->writeMessage(thrID, acRtl);

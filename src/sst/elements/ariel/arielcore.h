@@ -224,6 +224,7 @@ class ArielCore : public ComponentExtension {
         uint32_t maxIssuePerCycle;
         uint32_t maxQLength;
         uint64_t cacheLineSize;
+        void* rtl_inp_ptr = nullptr;
         ArielMemoryManager* memmgr;
         const uint32_t verbosity;
         const uint32_t perform_checks;

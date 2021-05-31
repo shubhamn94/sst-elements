@@ -1,8 +1,8 @@
 import sst
 import os
 
-clock = "2GHz"
-sst.setProgramOption("timebase", "1ps")
+clock = "1GHz"
+sst.setProgramOption("timebase", "0.5ps")
 
 sst_root = os.getenv( "SST_ROOT" )
 #app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
@@ -19,6 +19,7 @@ ariel.addParams({
         "pipetimeout" : "0",
         "executable" : app,
         "arielmode" : "1",
+        "clock" : "1GHz",
         "arielinterceptcalls" : "1",
         "launchparamcount" : 1,
         "writepayloadtrace" : 1,
@@ -33,7 +34,7 @@ corecount = 1;
 
 rtl = sst.Component("vecshiftregister", "vecshiftreg.vecShiftReg")
 rtl.addParams({
-        "ExecFreq" : "1 GHz",
+        "ExecFreq" : "1GHz",
         "maxCycles" : "100"
 	})
 
@@ -41,7 +42,7 @@ rtlmemmgr = rtl.setSubComponent("memmgr", "vecshiftregister.MemoryManagerSimple"
 
 l1cpucache = sst.Component("l1cpucache", "memHierarchy.Cache")
 l1cpucache.addParams({
-        "cache_frequency" : "2 Ghz",
+        "cache_frequency" : "1GHz",
         "cache_size" : "64 KB",
         "cache_type" : "inclusive",
         "coherence_protocol" : "MSI",
@@ -55,7 +56,7 @@ l1cpucache.addParams({
 
 l1rtlcache = sst.Component("l1rtlcache", "memHierarchy.Cache")
 l1rtlcache.addParams({
-        "cache_frequency" : "2 Ghz",
+        "cache_frequency" : "1GHz",
         "cache_size" : "64 KB",
         "coherence_protocol" : "MSI",
         "replacement_policy" : "lru",
@@ -68,7 +69,10 @@ l1rtlcache.addParams({
 
 # Bus between private L1s and L2
 membus = sst.Component("membus", "memHierarchy.Bus")
-membus.addParams( { "bus_frequency" : clock } )
+membus.addParams( { "bus_frequency" : clock,
+                    "debug" : 2,
+                    "debug_level" : 10
+} )
 
 cpu_cache_link = sst.Link("cpu_cache_link")
 cpu_cache_link.connect( (ariel, "cache_link_0", "50ps"), (l1cpucache, "high_network_0", "50ps") )
