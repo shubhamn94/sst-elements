@@ -183,36 +183,38 @@ void vecShiftReg::handleArielEvent(SST::Event *event) {
 
     output.verbose(CALL_INFO, 1, 0, "\nVecshiftReg RTL Event handle called \n");
 
-    std::deque<uint64_t>* freePage_pool = new std::deque<uint64_t>(); 
-    memcpy((void*)freePage_pool, (void*)&ariel_ev->RtlData->freePages, sizeof(ariel_ev->RtlData->freePages)); 
+    //std::deque<uint64_t>* freePage_pool = new std::deque<uint64_t>(); 
+    //memcpy((void*)freePage_pool, (void*)&ariel_ev->RtlData.freePages, sizeof(ariel_ev->RtlData.freePages)); 
+    /*for(auto it = ariel_ev->RtlData.freePages->begin(); it != ariel_ev->RtlData.freePages->end(); ++it)
+        fprintf(stderr, "\nContent in handleArielEvent is: %" PRIu64, *it);
+    fprintf(stderr, "\npageSize in handleArielEvent is: %" PRIu64, ariel_ev->RtlData.freePages->size());
+    fprintf(stderr, "\npageFront in handleArielEvent is: %" PRIu64, ariel_ev->RtlData.freePages->front());
+    fprintf(stderr, "\npageBack in handleArielEvent is: %" PRIu64, ariel_ev->RtlData.freePages->back());*/
 
-    /*fprintf(stderr, "\npageSize in handleArielEvent is: %" PRIu64, ariel_ev->RtlData->pageSize);
-    fprintf(stderr, "\ntranslationCacheEntries in handleArielEvent is: %" PRIu32, ariel_ev->RtlData->translationCacheEntries);
-    fprintf(stderr, "\ntranslationEnabled in handleArielEvent is: %d", ariel_ev->RtlData->translationEnabled);
-    fprintf(stderr, "\ntranslationCache in handleArielEvent is: %" PRIu64, ariel_ev->RtlData->translationCache->size());*/
+    /*fprintf(stderr, "\npageSize in handleArielEvent is: %" PRIu64, ariel_ev->RtlData.pageSize);
+    fprintf(stderr, "\ntranslationCacheEntries in handleArielEvent is: %" PRIu32, ariel_ev->RtlData.translationCacheEntries);
+    fprintf(stderr, "\ntranslationEnabled in handleArielEvent is: %d", ariel_ev->RtlData.translationEnabled);
+    fprintf(stderr, "\ntranslationCache in handleArielEvent is: %" PRIu64, ariel_ev->RtlData.translationCache->size());*/
 
-    memmgr->AssignRtlMemoryManagerSimple(*ariel_ev->RtlData->pageTable, freePage_pool, ariel_ev->RtlData->pageSize);
-    memmgr->AssignRtlMemoryManagerCache(*ariel_ev->RtlData->translationCache, ariel_ev->RtlData->translationCacheEntries, ariel_ev->RtlData->translationEnabled);
+    memmgr->AssignRtlMemoryManagerSimple(*ariel_ev->RtlData.pageTable, ariel_ev->RtlData.freePages, ariel_ev->RtlData.pageSize);
+    memmgr->AssignRtlMemoryManagerCache(*ariel_ev->RtlData.translationCache, ariel_ev->RtlData.translationCacheEntries, ariel_ev->RtlData.translationEnabled);
 
     //Update all the virtual address pointers in RTLEvent class
     ev->updated_rtl_params = ariel_ev->get_updated_rtl_params();
     ev->inp_ptr = ariel_ev->get_rtl_inp_ptr(); 
-    ev->inp_info = ariel_ev->get_rtl_inp_info();
     inp_ptr = ariel_ev->get_rtl_inp_ptr();
-    inp_size = ariel_ev->RtlData->rtl_inp_size;
+    //fprintf(stderr, "\n rtl_inp_ptr in ArielRtlEvent is: %" PRIu64, (uint64_t)ariel_ev->get_rtl_inp_ptr());
+    inp_size = ariel_ev->RtlData.rtl_inp_size;
     ev->ctrl_ptr = ariel_ev->get_rtl_ctrl_ptr(); 
-    ev->ctrl_info = ariel_ev->get_rtl_ctrl_info();
-    cacheLineSize = ariel_ev->RtlData->cacheLineSize;
+    cacheLineSize = ariel_ev->RtlData.cacheLineSize;
 
     //Creating Read Event from memHierarchy for the above virtual address pointers
     RtlReadEvent* rtlrev_params = new RtlReadEvent((uint64_t)ariel_ev->get_updated_rtl_params(),(uint32_t)ariel_ev->get_updated_rtl_params_size()); 
     RtlReadEvent* rtlrev_inp_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_inp_ptr(),(uint32_t)ariel_ev->get_rtl_inp_size()); 
     RtlReadEvent* rtlrev_ctrl_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_ctrl_ptr(),(uint32_t)ariel_ev->get_rtl_ctrl_size()); 
-    RtlReadEvent* rtlrev_inp_info = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_inp_info(),(uint32_t)sizeof(*(ariel_ev->get_rtl_inp_info()))); 
-    RtlReadEvent* rtlrev_ctrl_info = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_ctrl_info(),(uint32_t)sizeof(*(ariel_ev->get_rtl_ctrl_info()))); 
     fprintf(stderr, "\nVirtual address in handleArielEvent is: %" PRIu64, (uint64_t)ariel_ev->get_updated_rtl_params());
 
-    size_t size = ariel_ev->get_updated_rtl_params_size() + ariel_ev->get_rtl_inp_size() + ariel_ev->get_rtl_ctrl_size() + (size_t)sizeof(ariel_ev->get_rtl_inp_info()) + (size_t)sizeof(ariel_ev->get_rtl_ctrl_info());
+    size_t size = ariel_ev->get_updated_rtl_params_size() + ariel_ev->get_rtl_inp_size() + ariel_ev->get_rtl_ctrl_size();
     uint8_t* data = (uint8_t*)malloc(size);
     setBaseDataAddress(data);
 
@@ -220,8 +222,6 @@ void vecShiftReg::handleArielEvent(SST::Event *event) {
     generateReadRequest(rtlrev_params);
     generateReadRequest(rtlrev_inp_ptr);
     generateReadRequest(rtlrev_ctrl_ptr);
-    generateReadRequest(rtlrev_inp_info);
-    generateReadRequest(rtlrev_ctrl_info);
     sendArielEvent();
 }
 
@@ -271,8 +271,8 @@ void vecShiftReg::handleArielEvent(SST::Event *event) {
 void vecShiftReg::sendArielEvent() {
      
     RtlAckEv = new ArielComponent::ArielRtlEvent();
-    RtlAckEv->RtlData->rtl_inp_ptr = inp_ptr;
-    RtlAckEv->RtlData->rtl_inp_size = inp_size;
+    RtlAckEv->RtlData.rtl_inp_ptr = inp_ptr;
+    RtlAckEv->RtlData.rtl_inp_size = inp_size;
     ArielRtlLink->send(RtlAckEv);
     return;
 }

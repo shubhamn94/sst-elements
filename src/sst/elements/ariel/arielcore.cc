@@ -497,6 +497,7 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
                             (uint32_t) pendingTransactions->size()));
         if(event->virtualAddr == (uint64_t)rtl_inp_ptr) {
             fprintf(stderr, "\nVirtual Address: %" PRIu64, event->virtualAddr);
+            //fprintf(stderr, "\nInp_Ptr at Ariel is: ");
             fprintf(stderr, "\nSize is %" PRIu64, event->size);
             for(int i = 0; i < event->size; i++) {
                 fprintf(stderr, "\n");
@@ -728,12 +729,8 @@ bool ArielCore::isCoreStalled() const {
     return isStalled;
 }
 
-void ArielCore::createRtlEvent(TYPEINFO* inp_info, TYPEINFO* ctrl_info, void* inp_ptr, void* ctrl_ptr, void* updated_params, size_t inp_size, size_t ctrl_size, size_t updated_rtl_params_size) {
+void ArielCore::createRtlEvent(void* inp_ptr, void* ctrl_ptr, void* updated_params, size_t inp_size, size_t ctrl_size, size_t updated_rtl_params_size) {
     ArielRtlEvent* Ev = new ArielRtlEvent();
-    //TYPEINFO& rtl_inp_info = *inp_info;
-    //TYPEINFO& rtl_ctrl_info = *ctrl_info;
-    Ev->set_rtl_inp_info(inp_info);
-    Ev->set_rtl_ctrl_info(ctrl_info);
     Ev->set_rtl_inp_ptr(inp_ptr);
     Ev->set_rtl_ctrl_ptr(ctrl_ptr);
     Ev->set_updated_rtl_params(updated_params);
@@ -940,7 +937,7 @@ bool ArielCore::refillQueue() {
 #endif
 
             case ARIEL_ISSUE_RTL: 
-                createRtlEvent(ac.shmem.inp_info, ac.shmem.ctrl_info, ac.shmem.inp_ptr, ac.shmem.ctrl_ptr, ac.shmem.updated_rtl_params, ac.shmem.inp_size, ac.shmem.ctrl_size, ac.shmem.updated_rtl_params_size); 
+                createRtlEvent(ac.shmem.inp_ptr, ac.shmem.ctrl_ptr, ac.shmem.updated_rtl_params, ac.shmem.inp_size, ac.shmem.ctrl_size, ac.shmem.updated_rtl_params_size); 
                 break;
             default:
                 // Not sure what this is
@@ -1159,11 +1156,9 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
 void ArielCore::handleRtlEvent(ArielRtlEvent* RtlEv) {
     
     RtlEv->set_cachelinesize(cacheLineSize);
-    memmgr->get_page_info(RtlEv->RtlData->pageTable, &RtlEv->RtlData->freePages, RtlEv->RtlData->pageSize);
-    memmgr->get_tlb_info(RtlEv->RtlData->translationCache, RtlEv->RtlData->translationCacheEntries, RtlEv->RtlData->translationEnabled);
+    memmgr->get_page_info(RtlEv->RtlData.pageTable, RtlEv->RtlData.freePages, RtlEv->RtlData.pageSize);
+    memmgr->get_tlb_info(RtlEv->RtlData.translationCache, RtlEv->RtlData.translationCacheEntries, RtlEv->RtlData.translationEnabled);
     RtlLink->send(RtlEv);
-    //fprintf(stderr, "Size of rtl_inp_info in handleRtlEvent is: %" PRIu64, RtlEv->RtlData->rtl_inp_info->size());
-    //fprintf(stderr, "Size of rtl_ctrl_info in handleRtlEvent is: %" PRIu64, RtlEv->RtlData->rtl_ctrl_info->size());
     return;
 }
 
@@ -1390,9 +1385,9 @@ void ArielCore::handleRtlAckEvent(SST::Event* e) {
         //                   get the pointers and print the Output: XXXX
         //======================================================================================//
     }
-    if(ev->RtlData->rtl_inp_ptr != nullptr) {
-        rtl_inp_ptr = ev->RtlData->rtl_inp_ptr;
-        ArielReadEvent *are = new ArielReadEvent((uint64_t)ev->RtlData->rtl_inp_ptr, (uint64_t)ev->RtlData->rtl_inp_size);
+    if(ev->RtlData.rtl_inp_ptr != nullptr) {
+        rtl_inp_ptr = ev->RtlData.rtl_inp_ptr;
+        ArielReadEvent *are = new ArielReadEvent((uint64_t)ev->RtlData.rtl_inp_ptr, (uint64_t)ev->RtlData.rtl_inp_size);
         fprintf(stderr, "\nAriel received Event from RTL. Generating Read Request\n");
         handleReadRequest(are);
     }

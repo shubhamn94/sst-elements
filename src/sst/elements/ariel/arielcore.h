@@ -138,7 +138,7 @@ class ArielCore : public ComponentExtension {
       }
 
         void setCacheLink(SimpleMem* newCacheLink);
-        void createRtlEvent(TYPEINFO*, TYPEINFO*, void*, void*, void*, size_t, size_t, size_t);
+        void createRtlEvent(void*, void*, void*, size_t, size_t, size_t);
         void setRtlLink(Link* rtllink);
 
 #ifdef HAVE_CUDA

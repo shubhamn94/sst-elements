@@ -35,7 +35,6 @@ public:
     void input_sigs(VecShiftRegister*);
     void control_sigs(VecShiftRegister*);
     void *inp_ptr, *ctrl_ptr, *updated_rtl_params;
-    TYPEINFO *inp_info, *ctrl_info;
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         SST::Event::serialize_order(ser);

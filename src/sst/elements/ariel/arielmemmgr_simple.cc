@@ -180,9 +180,8 @@ void ArielMemoryManagerSimple::printTable() {
 
 void ArielMemoryManagerSimple::get_page_info(std::unordered_map<uint64_t, uint64_t>* pagetable, std::deque<uint64_t>* freepages, uint64_t& pagesize) {
     memcpy((void*)pagetable, (void*)(&pageTable), sizeof(pageTable));
-    *freepages = freePages; 
+    memcpy((void*)freepages, (void*)(&freePages), sizeof(freePages)); 
     pagesize = pageSize;
-    //fprintf(stderr, "Pagesize in ArielMemorymanager is: %" PRIu64, pageSize);
 
     return;
 }

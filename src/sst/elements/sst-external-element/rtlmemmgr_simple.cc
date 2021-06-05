@@ -24,16 +24,12 @@ using namespace SST::RtlComponent;
 RtlMemoryManagerSimple::RtlMemoryManagerSimple(ComponentId_t id, Params& params) :
             RtlMemoryManagerCache(id, params) { }
 
-RtlMemoryManagerSimple::~RtlMemoryManagerSimple() {
-}
+RtlMemoryManagerSimple::~RtlMemoryManagerSimple() { /*free((void*)(&freePages));*/ }
 
 void RtlMemoryManagerSimple::AssignRtlMemoryManagerSimple(std::unordered_map<uint64_t, uint64_t> pagetable, std::deque<uint64_t>* freepages, uint64_t pagesize) {
     pageTable = pagetable; 
-    //fprintf(stderr, "\nfreepages size in rtlmemmgr_simple is: %" PRIu64, freepages->size());
-    memcpy((void*)(&freePages), (void*)freepages, sizeof(*freepages));
-    //fprintf(stderr, "\nfreePages size in rtlmemmgr_simple is: %" PRIu64, freePages.size());
+    freePages = freepages;
     pageSize = pagesize;
-    //fprintf(stderr, "\npageSize in RtlMemorymanager is: %" PRIu64, pageSize);
     return; 
 }
 
@@ -57,14 +53,14 @@ void RtlMemoryManagerSimple::allocate(const uint64_t size, const uint32_t level,
 
     uint64_t nextVirtPage = virtualAddress;
     for(uint64_t bytesLeft = 0; bytesLeft < roundedSize; bytesLeft += pageSize) {
-        if(freePages.empty()) {
+        if(freePages->empty()) {
                 output->fatal(CALL_INFO, -1, "Requested a memory allocation of size: %" PRIu64 " which failed due to not having enough free pages\n",
                     size);
         }
 
         fprintf(stderr, "\nAllocation, Popping freepages");
-        const uint64_t nextPhysPage = freePages.front();
-        freePages.pop_front();
+        const uint64_t nextPhysPage = freePages->front();
+        freePages->pop_front();
 
         pageTable.insert( std::pair<uint64_t, uint64_t>(nextVirtPage, nextPhysPage) );
 
@@ -75,7 +71,7 @@ void RtlMemoryManagerSimple::allocate(const uint64_t size, const uint32_t level,
     }
 
     output->verbose(CALL_INFO, 4, 0, "Request leaves: %" PRIu32 " free pages\n",
-        (uint32_t) freePages.size());
+        (uint32_t) freePages->size());
 
 }
 

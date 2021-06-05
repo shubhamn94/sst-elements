@@ -53,7 +53,7 @@ class RtlMemoryManagerSimple : public RtlMemoryManagerCache {
 	void printTable();
 
         uint64_t pageSize;
-        std::deque<uint64_t> freePages;
+        std::deque<uint64_t>* freePages;
 
         std::unordered_map<uint64_t, uint64_t> pageTable;
 };

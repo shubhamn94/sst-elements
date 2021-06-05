@@ -900,6 +900,7 @@ void* ariel_mlm_malloc(size_t size, int level) {
 
     void* real_ptr = 0;
     posix_memalign(&real_ptr, 4096, real_req_size);
+    fprintf(stderr, "\nPOSIX Memalign called for address: %" PRIu64, (uint64_t)real_ptr);
 
     const uint64_t virtualAddress = (uint64_t) real_ptr;
     const uint64_t allocationLength = (uint64_t) real_req_size;
@@ -1577,15 +1578,9 @@ void ariel_start_RTL_sim(RTL_shmem_info* rtl_shmem) {
     
     ArielCommand acRtl; 
     acRtl.command = ARIEL_ISSUE_RTL;
-    acRtl.shmem.inp_info = rtl_shmem->get_inp_info();
-    acRtl.shmem.ctrl_info = rtl_shmem->get_ctrl_info();
-    fprintf(stderr, "\nSize of inp_info in PIN is: %" PRIu64, rtl_shmem->get_inp_info()->size());
-    fprintf(stderr, "\nSize of ctrl_info in PIN is: %" PRIu64, rtl_shmem->get_ctrl_info()->size());
     acRtl.shmem.inp_size = rtl_shmem->get_inp_size();
     acRtl.shmem.ctrl_size = rtl_shmem->get_ctrl_size();
     acRtl.shmem.updated_rtl_params_size = rtl_shmem->get_params_size();
-    fprintf(stderr, "\ninp_size in PIN is: %" PRIu64, acRtl.shmem.inp_size);
-    fprintf(stderr, "\nctrl_size in PIN is: %" PRIu64, acRtl.shmem.ctrl_size);
 
     acRtl.shmem.inp_ptr = rtl_shmem->get_inp_ptr(); 
     acRtl.shmem.ctrl_ptr = rtl_shmem->get_ctrl_ptr();
@@ -1603,8 +1598,6 @@ void ariel_update_RTL_signals(RTL_shmem_info* rtl_shmem) {
 
     ArielCommand acRtl;
     acRtl.command = ARIEL_ISSUE_RTL;
-    acRtl.shmem.inp_info = rtl_shmem->get_inp_info();
-    acRtl.shmem.ctrl_info = rtl_shmem->get_ctrl_info();
     acRtl.shmem.inp_size = rtl_shmem->get_inp_size();
     acRtl.shmem.ctrl_size = rtl_shmem->get_ctrl_size();
     acRtl.shmem.updated_rtl_params_size = rtl_shmem->get_params_size();

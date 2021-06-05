@@ -44,7 +44,6 @@
 
 #define ARIEL_MAX_PAYLOAD_SIZE 64
 
-typedef std::vector<std::pair<std::string, unsigned int>> TYPEINFO;
 namespace SST {
 namespace ArielComponent {
 
@@ -176,8 +175,6 @@ struct ArielCommand {
             uint64_t vaddr;
         } flushline;
         struct {
-            TYPEINFO* inp_info;
-            TYPEINFO* ctrl_info;
             void* inp_ptr;
             void* ctrl_ptr;
             void* updated_rtl_params;
