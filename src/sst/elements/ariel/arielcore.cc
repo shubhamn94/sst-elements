@@ -196,8 +196,8 @@ void ArielCore::commitWriteEvent(const uint64_t address,
     if(length > 0) {
         SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, address, length);
         req->setVirtualAddress(virtAddress);
-        fprintf(stderr, "\ncommitWriteEvent Called for Virtual address: %" PRIu64, virtAddress);
-        fprintf(stderr, "\ncommitWriteEvent length is: %" PRIu32, length);
+        //fprintf(stderr, "\ncommitWriteEvent Called for Virtual address: %" PRIu64, virtAddress);
+        //fprintf(stderr, "\ncommitWriteEvent length is: %" PRIu32, length);
 
         if( writePayloads ) {
             //if(verbosity >= 1) {
@@ -214,10 +214,10 @@ void ArielCore::commitWriteEvent(const uint64_t address,
                 //fprintf(stderr, "\nWrite-Payload: Len=%" PRIu32 ", Data={ %s } %p\n", length, payloadString.c_str(), virtAddress);
             //}
             //fprintf(stderr, "\nWriting Payload for address: %" PRIu64, virtAddress);
-            for(int i = 0; i < length; ++i) { 
+            /*for(int i = 0; i < length; ++i) { 
                 fprintf(stderr, "\n");
                 fprintf(stderr, "%" PRIu8, payload[i]);
-            }
+            }*/
             req->setPayload( (uint8_t*) payload, length );
         }
 #ifdef HAVE_CUDA
@@ -915,8 +915,8 @@ bool ArielCore::refillQueue() {
             case ARIEL_ISSUE_TLM_MAP:
                 static int alloca=0;
                 createAllocateEvent(ac.mlm_map.vaddr, ac.mlm_map.alloc_len, ac.mlm_map.alloc_level, ac.instPtr);
-                alloca++;
-                fprintf(stderr, "\ncreateAllocate called for times: %d", alloca);
+                //alloca++;
+                //fprintf(stderr, "\ncreateAllocate called for times: %d", alloca);
                 break;
 
             case ARIEL_ISSUE_TLM_FREE:

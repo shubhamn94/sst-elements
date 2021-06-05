@@ -65,8 +65,7 @@ class ArielMemoryManager : public SubComponent {
 
         /** Request to allocate a malloc, not supported by all memory managers */
         virtual bool allocateMalloc(const uint64_t size, const uint32_t level, const uint64_t virtualAddress, const uint64_t instructionPointer, const uint32_t thread) {
-            output->verbose(CALL_INFO, 0, 0, "The instantiated ArielMemoryManager does not support malloc handling.\n");
-            //fprintf(stderr, "\nAllocateMalloc is not supported\n");
+            output->verbose(CALL_INFO, 1, 0, "The instantiated ArielMemoryManager does not support malloc handling.\n");
             return false;
         }
 

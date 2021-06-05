@@ -900,7 +900,6 @@ void* ariel_mlm_malloc(size_t size, int level) {
 
     void* real_ptr = 0;
     posix_memalign(&real_ptr, 4096, real_req_size);
-    fprintf(stderr, "\nPOSIX Memalign called for address: %" PRIu64, (uint64_t)real_ptr);
 
     const uint64_t virtualAddress = (uint64_t) real_ptr;
     const uint64_t allocationLength = (uint64_t) real_req_size;
@@ -980,7 +979,7 @@ VOID ariel_premalloc_instrument(ADDRINT allocSize, ADDRINT ip)
 
 VOID ariel_postmalloc_instrument(ADDRINT allocLocation)
 {
-    static int x = 0;
+    //static int x = 0;
     if(lastMallocSize >= 0) {
         THREADID currentThread = PIN_ThreadId();
         UINT32 thr = (UINT32) currentThread;
@@ -999,9 +998,9 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation)
             ariel_print_stack(thr, allocationLength, allocLocation, myIndex);
         }
 
-        fprintf(stderr, "\n x is: %d",x);
-        fprintf(stderr, "\nAriel Equivalent Malloc called\n");
-        x++;
+        //fprintf(stderr, "\n x is: %d",x);
+        //fprintf(stderr, "\nAriel Equivalent Malloc called\n");
+        //x++;
 
         ArielCommand ac;
         ac.command = ARIEL_ISSUE_TLM_MAP;
