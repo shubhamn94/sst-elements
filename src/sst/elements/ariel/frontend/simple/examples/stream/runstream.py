@@ -5,13 +5,12 @@ clock = "1GHz"
 sst.setProgramOption("timebase", "0.5ps")
 
 sst_root = os.getenv( "SST_ROOT" )
-#app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
 app = "/home/shubham/ECE633_Independent_Project/shubham/sst-tools/tools/ariel/femlm/examples/stream/mlmstream" 
 
 if not os.path.exists(app):
     app = os.getenv( "OMP_EXE" )
     printf("OS PATH DOESN'T EXIST")
-ariel = sst.Component("Shubham", "ariel.ariel")
+ariel = sst.Component("A0", "ariel.ariel")
 ariel.addParams({
         "verbose" : "1",
         "maxcorequeue" : "256",
@@ -23,8 +22,6 @@ ariel.addParams({
         "arielinterceptcalls" : "1",
         "launchparamcount" : 1,
         "writepayloadtrace" : 1,
-        #"arielstack" : "1",
-        #"mallocmapfile" : "memory_map.log",
         "launchparam0" : "-ifeellucky",
         })
 

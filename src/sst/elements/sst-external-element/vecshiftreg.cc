@@ -290,21 +290,23 @@ void vecShiftReg::handleMemEvent(SimpleMem::Request* event) {
         int i;
         //Actual reading of data from memEvent and storing it to getDataAddress
         for(i = 0; i < event->data.size(); i++)
-            fprintf(stderr, "\nOutput is: %" PRIu8, event->data[i]); 
-        //getDataAddress()[index+i] = event->data[i]; 
+            getDataAddress()[index+i] = event->data[i]; 
+        //fprintf(stderr, "\nOutput is: %" PRIu8, event->data[i]);
 
         setDataAddress(getDataAddress()+index+i);
         if(event->getVirtualAddress() == (uint64_t)ev->updated_rtl_params) {
             bool* ptr = (bool*)getBaseDataAddress();
             output.verbose(CALL_INFO, 1, 0, "Updated Rtl Params is: %d\n",*ptr);
         }
-        //UpdateRtlParams(dataAddress);
 
         pendingTransactions->erase(find_entry);
         pending_transaction_count--;
 
-        if(isStalled && pending_transaction_count == 0)
+        if(isStalled && pending_transaction_count == 0) {
+            ev->update_data = getBasedataAddress();    
+            ev->UpdateRtlSignals();
             isStalled = false;
+        }
     } 
     
     else 

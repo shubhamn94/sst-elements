@@ -28,7 +28,8 @@ namespace SST {
 class RTLEvent : public SST::Event {
 public:
     typedef std::vector<char> dataVec;
-    bool update_registers, verbose, done_reset, updated, update_eval_args;
+    bool update_inp, update_ctrl, update_registers, verbose, done_reset, 
+         updated, update_eval_args, sim_done;
     RTLEvent() : SST::Event() { }
     dataVec payload;
 

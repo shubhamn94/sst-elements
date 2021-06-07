@@ -106,8 +106,8 @@ private:
     RTLEvent *ev;
     VecShiftRegister *dut;
     SST::ArielComponent::ArielRtlEvent* RtlAckEv;
-    uint64_t inp_VA, ctrl_VA, updated_rtl_params_VA, inp_PA, ctrl_PA, updated_rtl_params_PA;
     size_t inp_size, ctrl_size, updated_rtl_params_size;
+    void* update_data = nullptr;
     void* inp_ptr = nullptr;
     RtlMemoryManager* memmgr;
 

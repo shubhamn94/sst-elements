@@ -400,6 +400,7 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADD
     }
     printf("\n");
 */
+    //fprintf(stderr, "\nWriteInstructionWrite called for address %" PRIu64, (uint64_t)address);
     tunnel->writeMessage(thr, ac);
 }
 
@@ -464,6 +465,7 @@ VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSiz
             UINT32 instClass, UINT32 simdOpWidth)
 {
 
+    //fprintf(stderr, "\nWriteInstructionWriteOnly called for address %" PRIu64, (uint64_t)writeAddr);
     if(enable_output) {
         if(thr < core_count) {
             WriteStartInstructionMarker(thr, ip);
