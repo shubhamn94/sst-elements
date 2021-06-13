@@ -22,14 +22,11 @@ using namespace std;
 using namespace SST::RtlComponent;
 using namespace SST::Interfaces;
 
-//#define RTL_CORE_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
-
 vecShiftReg::vecShiftReg(SST::ComponentId_t id, SST::Params& params) :
 	SST::Component(id)/*, verbosity(static_cast<uint32_t>(out->getVerboseLevel()))*/ {
 
     bool found;
-    dut = new VecShiftRegister;
-    ev = new RTLEvent();
+    cmodel = new VecShiftRegister;
     RtlAckEv = new ArielComponent::ArielRtlEvent();
 	output.init("vecShiftReg-" + getName() + "-> ", 1, 0, SST::Output::STDOUT);
 
@@ -53,7 +50,9 @@ vecShiftReg::vecShiftReg(SST::ComponentId_t id, SST::Params& params) :
     output.verbose(CALL_INFO, 1, 0, "Registering RTL clock at %s\n", RTLClk.c_str());
    
    //set our clock 
-   timeConverter = registerClock(RTLClk, new Clock::Handler<vecShiftReg>(this, &vecShiftReg::clockTick));
+   clock_handler = new Clock::Handler<vecShiftReg>(this, &vecShiftReg::clockTick); 
+   timeConverter = registerClock(RTLClk, clock_handler);
+   unregisterClock(timeConverter, clock_handler);
    writePayloads = params.find<int>("writepayloadtrace") == 0 ? false : true;
 
     //Configure and register Event Handler for ArielRtllink
@@ -95,7 +94,7 @@ vecShiftReg::vecShiftReg(SST::ComponentId_t id, SST::Params& params) :
 
    pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
    pending_transaction_count = 0;
-   isStalled = false;
+   isStalled = true;
 
     statReadRequests  = registerStatistic<uint64_t>( "read_requests");
     statWriteRequests = registerStatistic<uint64_t>( "write_requests");
@@ -115,25 +114,25 @@ vecShiftReg::vecShiftReg(SST::ComponentId_t id, SST::Params& params) :
 }
 
 vecShiftReg::~vecShiftReg() {
-    delete ev;
-    delete dut;
+    delete cmodel;
     delete RtlAckEv;
 }
 
 void vecShiftReg::setup() {
-    dut->reset = UInt<1>(1);
-	output.verbose(CALL_INFO, 1, 0, "Component is being setup.\n");
+    cmodel->reset = UInt<1>(1);
+	output.verbose(CALL_INFO, 1, 0, "Component is being setup\n");
     
 }
 
 void vecShiftReg::init(unsigned int phase) {
-	output.verbose(CALL_INFO, 1, 0, "Component Init Phase Called %d.\n", phase);
+	output.verbose(CALL_INFO, 1, 0, "Component Init Phase Called %d\n", phase);
     cacheLink->init(phase);
 }
 
 //Nothing to add in finish as of now. Need to see what could be added.
 void vecShiftReg::finish() {
-	output.verbose(CALL_INFO, 1, 0, "Component is being finished.\n");
+	output.verbose(CALL_INFO, 1, 0, "Component is being finished\n");
+    free(getBaseDataAddress());
 }
 
 //clockTick will actually execute the RTL design at every cycle based on the input and control signals updated by Ariel CPU or Event Handler.
@@ -149,17 +148,25 @@ bool vecShiftReg::clockTick( SST::Cycle_t currentCycle ) {
 	}*/
 
     if(!isStalled) {
-        dut->eval(update_registers, verbose, done_reset);
-    }
-	tickCount++;
+        //output.verbose(CALL_INFO, 1, 0, "\nClockTick from vecShiftReg is called. isStalled is: %d", isStalled);
+        cmodel->eval(ev.update_registers, ev.verbose, ev.done_reset);
+        output.verbose(CALL_INFO, 1, 0, "update_inp in ClockTick is: %d", ev.update_inp);
+        output.verbose(CALL_INFO, 1, 0, "update_ctrl in ClockTick is: %d", ev.update_ctrl);
+        output.verbose(CALL_INFO, 1, 0, "sim_cycle in ClockTick is: %" PRIu64, ev.sim_cycles);
+        output.verbose(CALL_INFO, 1, 0, "TickCount is: %" PRIu64, tickCount);
 
-	if( tickCount >= dynCycles || tickCount >= maxCycles ) {
-        if(sim_done) {
+        tickCount++;
+    }
+
+	if( tickCount >= sim_cycle || tickCount >= maxCycles ) {
+        //if(ev.sim_done) {
+            output.verbose(CALL_INFO, 1, 0, "OKToEndSim, TickCount %" PRIu64, tickCount);
+            output.verbose(CALL_INFO, 1, 0, "sim_cycle ending is: %" PRIu64, sim_cycle);
             primaryComponentOKToEndSim();  //Tell the SST that it can finish the simulation.
             RtlAckEv->setEndSim(true);
             ArielRtlLink->send(RtlAckEv);
             return true;
-        }
+        //}
 	} 
     
     else 
@@ -177,96 +184,48 @@ void vecShiftReg::handleArielEvent(SST::Event *event) {
     * void pointers will be defined by Ariel CPU and passed as parameters through SST::Event to the C++ model. 
     * As of now, shared memory is like a scratch-pad or heap which is passive without any intelligent performance improving stuff like TLB, Cache hierarchy, accessing mechanisms(VIPT/PIPT) etc.  
     */
+    unregisterClock(timeConverter, clock_handler);
     ArielComponent::ArielRtlEvent* ariel_ev = dynamic_cast<ArielComponent::ArielRtlEvent*>(event);
     RtlAckEv->setEventRecvAck(true);
     ArielRtlLink->send(RtlAckEv);
 
     output.verbose(CALL_INFO, 1, 0, "\nVecshiftReg RTL Event handle called \n");
 
-    //std::deque<uint64_t>* freePage_pool = new std::deque<uint64_t>(); 
-    //memcpy((void*)freePage_pool, (void*)&ariel_ev->RtlData.freePages, sizeof(ariel_ev->RtlData.freePages)); 
-    /*for(auto it = ariel_ev->RtlData.freePages->begin(); it != ariel_ev->RtlData.freePages->end(); ++it)
-        fprintf(stderr, "\nContent in handleArielEvent is: %" PRIu64, *it);
-    fprintf(stderr, "\npageSize in handleArielEvent is: %" PRIu64, ariel_ev->RtlData.freePages->size());
-    fprintf(stderr, "\npageFront in handleArielEvent is: %" PRIu64, ariel_ev->RtlData.freePages->front());
-    fprintf(stderr, "\npageBack in handleArielEvent is: %" PRIu64, ariel_ev->RtlData.freePages->back());*/
-
-    /*fprintf(stderr, "\npageSize in handleArielEvent is: %" PRIu64, ariel_ev->RtlData.pageSize);
-    fprintf(stderr, "\ntranslationCacheEntries in handleArielEvent is: %" PRIu32, ariel_ev->RtlData.translationCacheEntries);
-    fprintf(stderr, "\ntranslationEnabled in handleArielEvent is: %d", ariel_ev->RtlData.translationEnabled);
-    fprintf(stderr, "\ntranslationCache in handleArielEvent is: %" PRIu64, ariel_ev->RtlData.translationCache->size());*/
-
     memmgr->AssignRtlMemoryManagerSimple(*ariel_ev->RtlData.pageTable, ariel_ev->RtlData.freePages, ariel_ev->RtlData.pageSize);
     memmgr->AssignRtlMemoryManagerCache(*ariel_ev->RtlData.translationCache, ariel_ev->RtlData.translationCacheEntries, ariel_ev->RtlData.translationEnabled);
 
     //Update all the virtual address pointers in RTLEvent class
-    ev->updated_rtl_params = ariel_ev->get_updated_rtl_params();
-    ev->inp_ptr = ariel_ev->get_rtl_inp_ptr(); 
+    updated_rtl_params = ariel_ev->get_updated_rtl_params();
     inp_ptr = ariel_ev->get_rtl_inp_ptr();
-    //fprintf(stderr, "\n rtl_inp_ptr in ArielRtlEvent is: %" PRIu64, (uint64_t)ariel_ev->get_rtl_inp_ptr());
     inp_size = ariel_ev->RtlData.rtl_inp_size;
-    ev->ctrl_ptr = ariel_ev->get_rtl_ctrl_ptr(); 
     cacheLineSize = ariel_ev->RtlData.cacheLineSize;
 
     //Creating Read Event from memHierarchy for the above virtual address pointers
     RtlReadEvent* rtlrev_params = new RtlReadEvent((uint64_t)ariel_ev->get_updated_rtl_params(),(uint32_t)ariel_ev->get_updated_rtl_params_size()); 
     RtlReadEvent* rtlrev_inp_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_inp_ptr(),(uint32_t)ariel_ev->get_rtl_inp_size()); 
     RtlReadEvent* rtlrev_ctrl_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_ctrl_ptr(),(uint32_t)ariel_ev->get_rtl_ctrl_size()); 
-    fprintf(stderr, "\nVirtual address in handleArielEvent is: %" PRIu64, (uint64_t)ariel_ev->get_updated_rtl_params());
+    output.verbose(CALL_INFO, 1, 0, "\nVirtual address in handleArielEvent is: %" PRIu64, (uint64_t)ariel_ev->get_updated_rtl_params());
 
-    size_t size = ariel_ev->get_updated_rtl_params_size() + ariel_ev->get_rtl_inp_size() + ariel_ev->get_rtl_ctrl_size();
-    uint8_t* data = (uint8_t*)malloc(size);
-    setBaseDataAddress(data);
+    if(!mem_allocated) {
+        size_t size = ariel_ev->get_updated_rtl_params_size() + ariel_ev->get_rtl_inp_size() + ariel_ev->get_rtl_ctrl_size();
+        uint8_t* data = (uint8_t*)malloc(size);
+        VA_VA_map.insert({(uint64_t)ariel_ev->get_updated_rtl_params(), (uint64_t)data});
+        uint64_t index = ariel_ev->get_updated_rtl_params_size()/sizeof(uint8_t);
+        VA_VA_map.insert({(uint64_t)ariel_ev->get_rtl_inp_ptr(), (uint64_t)(data+index)});
+        index += ariel_ev->get_rtl_inp_size()/sizeof(uint8_t);
+        VA_VA_map.insert({(uint64_t)ariel_ev->get_rtl_ctrl_ptr(), (uint64_t)(data+index)});
+        setBaseDataAddress(data);
+        setDataAddress(getBaseDataAddress());
+        mem_allocated = true;
+    }
 
     //Initiating the read request from memHierarchy
     generateReadRequest(rtlrev_params);
     generateReadRequest(rtlrev_inp_ptr);
     generateReadRequest(rtlrev_ctrl_ptr);
+    isStalled = true;
     sendArielEvent();
 }
-
-/*void vecShiftReg::updateRtlsignals(uint64_t* address) {
-   * switch(address) {
-        case ev->udpated_rtl_params:
-            bool* ptr = (bool*)address;
-            ev->update_inp = *ptr;
-            ev->update_ctrl = *++ptr;
-            ev->update_eval_args = *++ptr; 
-            break;
-        case ev->inp_ptr:
-            ev->
-            
-    }
-}*/
-    //output.verbose(CALL_INFO, 1, 0, "First value of RTL params is: %d", *updated_rtl_params);
-    
-/*    if(update_inp) {
-        ev->inp_ptr = ariel_ev->get_rtl_inp_ptr(); 
-        ev->inp_info = ariel_ev->get_rtl_inp_info();
-        ev->input_sigs(dut);
-    }
-
-    if(update_ctrl) {
-        ev->ctrl_ptr = ariel_ev->get_rtl_ctrl_ptr(); 
-        ev->ctrl_info = ariel_ev->get_rtl_ctrl_info();
-        ev->control_sigs(dut);
-    }
-
-    if(update_eval_args) {
-        update_registers = *++updated_rtl_params;
-        verbose = *++updated_rtl_params;
-        done_reset = *++updated_rtl_params;
-    }
-
-    sim_done = *++updated_rtl_params;
-
-    uint64_t* dynCycles_ptr = (uint64_t*)(++updated_rtl_params);
-    dynCycles = *dynCycles_ptr;
- 
-    //loading initial values to the RTL design
-    dut->eval(update_registers, verbose, done_reset);
-
-}*/
 
 void vecShiftReg::sendArielEvent() {
      
@@ -284,17 +243,18 @@ void vecShiftReg::handleMemEvent(SimpleMem::Request* event) {
     if(find_entry != pendingTransactions->end()) {
         output.verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n", (uint32_t) pendingTransactions->size());
        
-        fprintf(stderr, "\nVirtual address in handleMemEvent is: %" PRIu64, event->virtualAddr);
-        //int index = event->getVirtualAddress() - getBaseDataAddress();
-        int index = getDataAddress() - getBaseDataAddress();
         int i;
+        auto DataAddress = VA_VA_map.find(event->virtualAddr);
+        if(DataAddress != VA_VA_map.end())
+            setDataAddress((uint8_t*)DataAddress->second);
+        else
+            output.fatal(CALL_INFO, -1, "Error: DataAddress corresponding to VA: %" PRIu64, event->virtualAddr);
         //Actual reading of data from memEvent and storing it to getDataAddress
+        output.verbose(CALL_INFO, 1, 0, "\nAddress is: %" PRIu64, (uint64_t)getDataAddress());
         for(i = 0; i < event->data.size(); i++)
-            getDataAddress()[index+i] = event->data[i]; 
-        //fprintf(stderr, "\nOutput is: %" PRIu8, event->data[i]);
+            getDataAddress()[i] = event->data[i];
 
-        setDataAddress(getDataAddress()+index+i);
-        if(event->getVirtualAddress() == (uint64_t)ev->updated_rtl_params) {
+        if(event->getVirtualAddress() == (uint64_t)updated_rtl_params) {
             bool* ptr = (bool*)getBaseDataAddress();
             output.verbose(CALL_INFO, 1, 0, "Updated Rtl Params is: %d\n",*ptr);
         }
@@ -303,8 +263,10 @@ void vecShiftReg::handleMemEvent(SimpleMem::Request* event) {
         pending_transaction_count--;
 
         if(isStalled && pending_transaction_count == 0) {
-            ev->update_data = getBasedataAddress();    
-            ev->UpdateRtlSignals();
+            ev.UpdateRtlSignals((void*)getBaseDataAddress(), cmodel, sim_cycle);
+            tickCount = 0;
+            reregisterClock(timeConverter, clock_handler);
+            setDataAddress(getBaseDataAddress());
             isStalled = false;
         }
     } 
@@ -324,10 +286,6 @@ void vecShiftReg::commitReadEvent(const uint64_t address,
         pending_transaction_count++;
         pendingTransactions->insert(std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req));
 
-        /*if(enableTracing) {
-                printTraceEntry(true, (const uint64_t) req->addrs[0], (const uint32_t) length);
-        }*/
-
         // Actually send the event to the cache
         cacheLink->sendRequest(req);
     }
@@ -341,7 +299,6 @@ void vecShiftReg::commitWriteEvent(const uint64_t address,
         req->setVirtualAddress(virtAddress);
 
         if( writePayloads ) {
-            //if(verbosity >= 16) {
                 char* buffer = new char[64];
                 std::string payloadString = "";
                 for(int i = 0; i < length; ++i) {
@@ -353,17 +310,13 @@ void vecShiftReg::commitWriteEvent(const uint64_t address,
 
                 output.verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s } %p\n",
                         length, payloadString.c_str(), (void*)virtAddress);
-            //}
+
             req->setPayload( (uint8_t*) payload, length );
         }
         
         pending_transaction_count++;
         pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
         
-        /*if(enableTracing) {
-            printTraceEntry(false, (const uint64_t) req->addrs[0], (const uint32_t) length);
-        }*/
-
         // Actually send the event to the cache
         cacheLink->sendRequest(req);
     }
@@ -427,12 +380,10 @@ void vecShiftReg::generateReadRequest(RtlReadEvent* rEv) {
 void vecShiftReg::generateWriteRequest(RtlWriteEvent* wEv) {
 
     const uint64_t writeAddress = wEv->getAddress();
-    fprintf(stderr, "\n Handle Write request generated for VA: %" PRIu64, writeAddress);
     const uint64_t writeLength  = std::min((uint64_t) wEv->getLength(), cacheLineSize); // Trim to cacheline size (occurs rarely for instructions such as xsave and fxsave)
 
     // See note in handleReadRequest() on alignment issues
     const uint64_t physAddr = memmgr->translateAddress(writeAddress);
-    fprintf(stderr, "\n Handle Write request generated for PA: %" PRIu64, physAddr);
     const uint64_t addr_offset  = physAddr % ((uint64_t) cacheLineSize);
 
     // We do not need to perform a split operation

@@ -196,8 +196,8 @@ void ArielCore::commitWriteEvent(const uint64_t address,
     if(length > 0) {
         SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, address, length);
         req->setVirtualAddress(virtAddress);
-        //fprintf(stderr, "\ncommitWriteEvent Called for Virtual address: %" PRIu64, virtAddress);
-        //fprintf(stderr, "\ncommitWriteEvent length is: %" PRIu32, length);
+        //output->verbose(CALL_INFO, 1, 0, "\ncommitWriteEvent Called for Virtual address: %" PRIu64, virtAddress);
+        //output->verbose(CALL_INFO, 1, 0, "\ncommitWriteEvent length is: %" PRIu32, length);
 
         if( writePayloads ) {
             //if(verbosity >= 1) {
@@ -213,10 +213,10 @@ void ArielCore::commitWriteEvent(const uint64_t address,
                 output->verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s } %p\n", length, payloadString.c_str(), (void*)virtAddress);
                 //fprintf(stderr, "\nWrite-Payload: Len=%" PRIu32 ", Data={ %s } %p\n", length, payloadString.c_str(), virtAddress);
             //}
-            //fprintf(stderr, "\nWriting Payload for address: %" PRIu64, virtAddress);
+            //output->verbose(CALL_INFO, 1, 0, "\nWriting Payload for address: %" PRIu64, virtAddress);
             /*for(int i = 0; i < length; ++i) { 
-                fprintf(stderr, "\n");
-                fprintf(stderr, "%" PRIu8, payload[i]);
+                output->verbose(CALL_INFO, 1, 0, "\n");
+                output->verbose(CALL_INFO, 1, 0, "%" PRIu8, payload[i]);
             }*/
             req->setPayload( (uint8_t*) payload, length );
         }
@@ -496,12 +496,11 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
         ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n",
                             (uint32_t) pendingTransactions->size()));
         if(event->virtualAddr == (uint64_t)rtl_inp_ptr) {
-            fprintf(stderr, "\nVirtual Address: %" PRIu64, event->virtualAddr);
-            //fprintf(stderr, "\nInp_Ptr at Ariel is: ");
-            fprintf(stderr, "\nSize is %" PRIu64, event->size);
+            output->verbose(CALL_INFO, 1, 0, "\nVirtual Address: %" PRIu64, event->virtualAddr);
+            output->verbose(CALL_INFO, 1, 0, "\nSize is %" PRIu64, event->size);
             for(int i = 0; i < event->size; i++) {
-                fprintf(stderr, "\n");
-                fprintf(stderr, "Output of ArielCache is: %" PRIu8, event->data[i]);
+                output->verbose(CALL_INFO, 1, 0, "\n");
+                output->verbose(CALL_INFO, 1, 0, "Output of ArielCache is: %" PRIu8, event->data[i]);
             }
         }
         pendingTransactions->erase(find_entry);
@@ -1034,7 +1033,6 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a write event...\n", coreID));
 
     const uint64_t writeAddress = wEv->getAddress();
-    //fprintf(stderr, "\n Handle Write request generated for VA: %" PRIu64, writeAddress);
     const uint64_t writeLength  = std::min((uint64_t) wEv->getLength(), cacheLineSize); // Trim to cacheline size (occurs rarely for instructions such as xsave and fxsave)
 
     // No longer neccessary due to trimming above
@@ -1046,7 +1044,6 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 
     // See note in handleReadRequest() on alignment issues
     const uint64_t physAddr = memmgr->translateAddress(writeAddress);
-    //fprintf(stderr, "\n Handle Write request generated for PA: %" PRIu64, physAddr);
     const uint64_t addr_offset  = physAddr % ((uint64_t) cacheLineSize);
 
     // We do not need to perform a split operation
@@ -1146,7 +1143,6 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
     /*  Todo: Should we treat this like the Flush event, and require that the Fence
     *  be put into a transaction queue?  */
     // Possibility A:
-    fprintf(stderr, "\n Fence event is being called");
     fence();
     // Possibility B:
     // commitFenceEvent();
@@ -1388,7 +1384,7 @@ void ArielCore::handleRtlAckEvent(SST::Event* e) {
     if(ev->RtlData.rtl_inp_ptr != nullptr) {
         rtl_inp_ptr = ev->RtlData.rtl_inp_ptr;
         ArielReadEvent *are = new ArielReadEvent((uint64_t)ev->RtlData.rtl_inp_ptr, (uint64_t)ev->RtlData.rtl_inp_size);
-        fprintf(stderr, "\nAriel received Event from RTL. Generating Read Request\n");
+        output->verbose(CALL_INFO, 1, 0, "\nAriel received Event from RTL. Generating Read Request\n");
         handleReadRequest(are);
     }
 
@@ -1527,7 +1523,7 @@ bool ArielCore::processNextEvent() {
         
         case RTL:
             ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 "next event is RTL (RTLEvent call)\n", coreID));
-            fprintf(stderr,"\nArielRTLEvent is being issued");
+            output->verbose(CALL_INFO, 1, 0, "\nArielRTLEvent is being issued");
             removeEvent = true;
             handleRtlEvent(dynamic_cast<ArielRtlEvent*>(nextEvent));
             break;

@@ -28,14 +28,16 @@ namespace SST {
 class RTLEvent : public SST::Event {
 public:
     typedef std::vector<char> dataVec;
-    bool update_inp, update_ctrl, update_registers, verbose, done_reset, 
-         updated, update_eval_args, sim_done;
+    bool update_inp, update_ctrl, update_registers, verbose, done_reset,
+         update_eval_args, sim_done;
+    uint64_t sim_cycles;
     RTLEvent() : SST::Event() { }
     dataVec payload;
 
     void input_sigs(VecShiftRegister*);
     void control_sigs(VecShiftRegister*);
-    void *inp_ptr, *ctrl_ptr, *updated_rtl_params;
+    void UpdateRtlSignals(void*, VecShiftRegister*, uint64_t&);
+    void *inp_ptr, *ctrl_ptr;
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         SST::Event::serialize_order(ser);

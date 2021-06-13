@@ -94,7 +94,7 @@ uint64_t RtlMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
     auto checkCache = translationCache.find(virtAddr);
     if(checkCache != translationCache.end()) {
         statTranslationCacheHits->addData(1);
-        fprintf(stderr, "\nCacheTranslation successful");
+        output->verbose(CALL_INFO, 1, 0, "\nCacheTranslation successful");
         return checkCache->second;
     }
 
@@ -111,7 +111,7 @@ uint64_t RtlMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
         output->verbose(CALL_INFO, 4, 0, "Page table hit: virtual address=%" PRIu64 " hit, virtual page start=%" PRIu64 ", virtual end=%" PRIu64 ", translates to phys page start=%" PRIu64 " translates to: phys address: %" PRIu64 " (offset added to phys start=%" PRIu64 ")\n",
                 virtAddr, page_itr->first, page_itr->first + pageSize, page_itr->second, physAddr, page_offset);
 
-        fprintf(stderr, "\nPage table hit successful");
+        output->verbose(CALL_INFO, 1, 0, "\nPage table hit successful");
         cacheTranslation(virtAddr, physAddr);
         return physAddr;
 
@@ -124,7 +124,7 @@ uint64_t RtlMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
         output->verbose(CALL_INFO, 4, 0, "Page offset calculation (generating a new page allocation request) for address %" PRIu64 ", offset=%" PRIu64 ", requesting virtual map to address: %" PRIu64 "\n",
                 virtAddr, offset, (virtAddr - offset));
 
-        fprintf(stderr, "\nPage table miss. Allocation");
+        output->verbose(CALL_INFO, 1, 0, "\nPage table miss. Allocation");
         // Perform an allocation so we can then re-find the address
         allocate(8, 0, virtAddr - offset);
 

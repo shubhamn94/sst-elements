@@ -18,6 +18,7 @@
 
 #include "VecShiftRegister_O1.h"
 #include <sst/core/link.h>
+#include <sst/core/clock.h>
 #include <sst/core/eli/elementinfo.h>
 #include "rtlevent.h"
 #include "arielrtlev.h"
@@ -100,18 +101,20 @@ private:
     void sendArielEvent();
     
     TimeConverter* timeConverter;
+    Clock::HandlerBase* clock_handler;
     bool writePayloads;
-    bool update_registers, verbose, done_reset, sim_done;
-    bool update_inp, update_ctrl, update_eval_args;
-    RTLEvent *ev;
-    VecShiftRegister *dut;
+    RTLEvent ev;
+    VecShiftRegister *cmodel;
     SST::ArielComponent::ArielRtlEvent* RtlAckEv;
     size_t inp_size, ctrl_size, updated_rtl_params_size;
-    void* update_data = nullptr;
     void* inp_ptr = nullptr;
+    void* updated_rtl_params = nullptr;
     RtlMemoryManager* memmgr;
+    bool mem_allocated = false;
+    uint64_t sim_cycle;
 
     std::unordered_map<Interfaces::SimpleMem::Request::id_t, Interfaces::SimpleMem::Request*>* pendingTransactions;
+    std::unordered_map<uint64_t, uint64_t> VA_VA_map;
     uint32_t pending_transaction_count;
 
     bool isStalled;
