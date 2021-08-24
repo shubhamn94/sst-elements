@@ -114,6 +114,7 @@ vecShiftReg::vecShiftReg(SST::ComponentId_t id, SST::Params& params) :
 }
 
 vecShiftReg::~vecShiftReg() {
+    output.verbose(CALL_INFO, 1, 0, "vecShiftReg destructor called!");
     delete cmodel;
     delete RtlAckEv;
 }
@@ -158,15 +159,15 @@ bool vecShiftReg::clockTick( SST::Cycle_t currentCycle ) {
         tickCount++;
     }
 
-	if( tickCount >= sim_cycle || tickCount >= maxCycles ) {
-        //if(ev.sim_done) {
+	if(tickCount >= sim_cycle /*|| tickCount >= maxCycles*/) {
+        output.verbose(CALL_INFO, 1, 0, "sim_cycle ending is: %" PRIu64, sim_cycle);
+        if(ev.sim_done) {
             output.verbose(CALL_INFO, 1, 0, "OKToEndSim, TickCount %" PRIu64, tickCount);
-            output.verbose(CALL_INFO, 1, 0, "sim_cycle ending is: %" PRIu64, sim_cycle);
-            primaryComponentOKToEndSim();  //Tell the SST that it can finish the simulation.
             RtlAckEv->setEndSim(true);
             ArielRtlLink->send(RtlAckEv);
+            primaryComponentOKToEndSim();  //Tell the SST that it can finish the simulation.
             return true;
-        //}
+        }
 	} 
     
     else 
