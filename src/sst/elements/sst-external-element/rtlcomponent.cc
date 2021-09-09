@@ -21,19 +21,16 @@ using namespace std;
 using namespace SST::RtlComponent;
 using namespace SST::Interfaces;
 
-//#define RTL_CORE_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
-
 Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
 	SST::Component(id)/*, verbosity(static_cast<uint32_t>(out->getVerboseLevel()))*/ {
 
     bool found;
     dut = new Rtlheader;
     axiport = new AXITop;
-    ev = new RTLEvent();
     RtlAckEv = new ArielComponent::ArielRtlEvent();
 	output.init("Rtlmodel-" + getName() + "-> ", 1, 0, SST::Output::STDOUT);
 
-	RTLClk  = params.find<std::string>("ExecFreq", "a" , found);
+	RTLClk  = params.find<std::string>("ExecFreq", "1GHz" , found);
     if (!found) {
         Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find work per cycle\n");
     }
@@ -53,7 +50,9 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
     output.verbose(CALL_INFO, 1, 0, "Registering RTL clock at %s\n", RTLClk.c_str());
    
    //set our clock 
-   timeConverter = registerClock(RTLClk, new Clock::Handler<Rtlmodel>(this, &Rtlmodel::clockTick));
+   clock_handler = new Clock::Handler<Rtlmodel>(this, &Rtlmodel::clockTick); 
+   timeConverter = registerClock(RTLClk, clock_handler);
+   unregisterClock(timeConverter, clock_handler);
    writePayloads = params.find<int>("writepayloadtrace") == 0 ? false : true;
 
     //Configure and register Event Handler for ArielRtllink
@@ -95,7 +94,8 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
 
    pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
    pending_transaction_count = 0;
-   isStalled = false;
+   unregisterClock(timeConverter, clock_handler);
+   isStalled = true;
 
     statReadRequests  = registerStatistic<uint64_t>( "read_requests");
     statWriteRequests = registerStatistic<uint64_t>( "write_requests");
@@ -115,7 +115,6 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
 }
 
 Rtlmodel::~Rtlmodel() {
-    delete ev;
     delete dut;
     delete axiport;
     delete RtlAckEv;
@@ -130,6 +129,7 @@ void Rtlmodel::setup() {
 //Nothing to add in finish as of now. Need to see what could be added.
 void Rtlmodel::finish() {
 	output.verbose(CALL_INFO, 1, 0, "Component is being finished.\n");
+    free(getBaseDataAddress());
 }
 
 //clockTick will actually execute the RTL design at every cycle based on the input and control signals updated by Ariel CPU or Event Handler.
@@ -145,14 +145,14 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
 	}*/
 
     if(!isStalled) {
-        dut->eval(update_registers, verbose, done_reset);
+        dut->eval(ev.update_registers, ev.verbose, ev.done_reset);
+        tickCount++;
     }
 
     if((axi_tvalid_$old ^ axi_tvalid_$next) || (axi_tdata_$old ^ axi_tdata_$next))  {
         handleAXISignals();
         axiport->eval(true, false, false);
     }
-	tickCount++;
 
     axi_tdata_$old = axi_tdata_$next;
     axi_tvalid_$old = axi_tvalid_$next;
@@ -160,10 +160,12 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
 
 
 	if( tickCount >= dynCycles || tickCount >= maxCycles ) {
-        if(sim_done) {
-            primaryComponentOKToEndSim();  //Tell the SST that it can finish the simulation.
+        output.verbose(CALL_INFO, 1, 0, "sim_cycle ending is: %" PRIu64, sim_cycle);
+        if(ev.sim_done) {
+            output.verbose(CALL_INFO, 1, 0, "OKToEndSim, TickCount %" PRIu64, tickCount);
             RtlAckEv->setEndSim(true);
             ArielRtlLink->send(RtlAckEv);
+            primaryComponentOKToEndSim();  //Tell the SST that it can finish the simulation.
             return true;
         }
 	} 
@@ -189,35 +191,53 @@ void Rtlmodel::handleArielEvent(SST::Event *event) {
 
     output.verbose(CALL_INFO, 1, 0, "\nVecshiftReg RTL Event handle called \n");
 
-    memmgr->AssignRtlMemoryManagerSimple(ariel_ev->RtlData->pageTable, ariel_ev->RtlData->freePages, ariel_ev->RtlData->pageSize);
-    memmgr->AssignRtlMemoryManagerCache(ariel_ev->RtlData->translationCache, ariel_ev->RtlData->translationCacheEntries, ariel_ev->RtlData->translationEnabled);
+    memmgr->AssignRtlMemoryManagerSimple(*ariel_ev->RtlData.pageTable, ariel_ev->RtlData.freePages, ariel_ev->RtlData.pageSize);
+    memmgr->AssignRtlMemoryManagerCache(*ariel_ev->RtlData.translationCache, ariel_ev->RtlData.translationCacheEntries, ariel_ev->RtlData.translationEnabled);
 
     //Update all the virtual address pointers in RTLEvent class
-    ev->updated_rtl_params = ariel_ev->get_updated_rtl_params();
-    ev->inp_ptr = ariel_ev->get_rtl_inp_ptr(); 
-    ev->inp_info = ariel_ev->get_rtl_inp_info();
-    ev->ctrl_ptr = ariel_ev->get_rtl_ctrl_ptr(); 
-    ev->ctrl_info = ariel_ev->get_rtl_ctrl_info();
-    cacheLineSize = ariel_ev->RtlData->cacheLineSize;
+    updated_rtl_params = ariel_ev->get_updated_rtl_params();
+    inp_ptr = ariel_ev->get_rtl_inp_ptr(); 
+    inp_size = ariel_ev->RtlData.rtl_inp_size;
+    cacheLineSize = ariel_ev->RtlData.cacheLineSize;
 
     //Creating Read Event from memHierarchy for the above virtual address pointers
     RtlReadEvent* rtlrev_params = new RtlReadEvent((uint64_t)ariel_ev->get_updated_rtl_params(),(uint32_t)ariel_ev->get_updated_rtl_params_size()); 
     RtlReadEvent* rtlrev_inp_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_inp_ptr(),(uint32_t)ariel_ev->get_rtl_inp_size()); 
     RtlReadEvent* rtlrev_ctrl_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_ctrl_ptr(),(uint32_t)ariel_ev->get_rtl_ctrl_size()); 
-    RtlReadEvent* rtlrev_inp_info = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_inp_info(),(uint32_t)sizeof(*(ariel_ev->get_rtl_inp_info()))); 
-    RtlReadEvent* rtlrev_ctrl_info = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_ctrl_info(),(uint32_t)sizeof(*(ariel_ev->get_rtl_ctrl_info()))); 
+    output.verbose(CALL_INFO, 1, 0, "\nVirtual address in handleArielEvent is: %" PRIu64, (uint64_t)ariel_ev->get_updated_rtl_params());
 
-    size_t size = ariel_ev->get_updated_rtl_params_size() + ariel_ev->get_rtl_inp_size() + ariel_ev->get_rtl_ctrl_size() + (size_t)sizeof(ariel_ev->get_rtl_inp_info()) + (size_t)sizeof(ariel_ev->get_rtl_ctrl_info());
-    uint8_t* data = (uint8_t*)malloc(size);
-    setBaseDataAddress(data);
+    if(!mem_allocated) {
+        size_t size = ariel_ev->get_updated_rtl_params_size() + ariel_ev->get_rtl_inp_size() + ariel_ev->get_rtl_ctrl_size();
+        uint8_t* data = (uint8_t*)malloc(size);
+        VA_VA_map.insert({(uint64_t)ariel_ev->get_updated_rtl_params(), (uint64_t)data});
+        uint64_t index = ariel_ev->get_updated_rtl_params_size()/sizeof(uint8_t);
+        VA_VA_map.insert({(uint64_t)ariel_ev->get_rtl_inp_ptr(), (uint64_t)(data+index)});
+        index += ariel_ev->get_rtl_inp_size()/sizeof(uint8_t);
+        VA_VA_map.insert({(uint64_t)ariel_ev->get_rtl_ctrl_ptr(), (uint64_t)(data+index)});
+        setBaseDataAddress(data);
+        setDataAddress(getBaseDataAddress());
+        mem_allocated = true;
+    }
+
+
 
     //Initiating the read request from memHierarchy
     generateReadRequest(rtlrev_params);
     generateReadRequest(rtlrev_inp_ptr);
     generateReadRequest(rtlrev_ctrl_ptr);
-    generateReadRequest(rtlrev_inp_info);
-    generateReadRequest(rtlrev_ctrl_info);
+    isStalled = true;
+    sendArielEvent();
 }
+
+void Rtlmodel::sendArielEvent() {
+     
+    RtlAckEv = new ArielComponent::ArielRtlEvent();
+    RtlAckEv->RtlData.rtl_inp_ptr = inp_ptr;
+    RtlAckEv->RtlData.rtl_inp_size = inp_size;
+    ArielRtlLink->send(RtlAckEv);
+    return;
+}
+
 
 void Rtlmodel::handleAXISignals() {
     axiport->readerFrontend.done = 0;
@@ -226,51 +246,8 @@ void Rtlmodel::handleAXISignals() {
     axiport->io_read_tdata = axi_tdata_$next; 
     axiport->io_read_tvalid = axi_tvalid_$next; 
     axiport->io_read_tready = axi_tready_$next; 
-    axiport->cmd_queue.push('r');
+    //axiport->cmd_queue.push('r');
 }
-
-/*void Rtlmodel::updateRtlsignals(uint64_t* address) {
-   * switch(address) {
-        case ev->udpated_rtl_params:
-            bool* ptr = (bool*)address;
-            ev->update_inp = *ptr;
-            ev->update_ctrl = *++ptr;
-            ev->update_eval_args = *++ptr; 
-            break;
-        case ev->inp_ptr:
-            ev->
-            
-    }
-}*/
-    //output.verbose(CALL_INFO, 1, 0, "First value of RTL params is: %d", *updated_rtl_params);
-    
-/*    if(update_inp) {
-        ev->inp_ptr = ariel_ev->get_rtl_inp_ptr(); 
-        ev->inp_info = ariel_ev->get_rtl_inp_info();
-        ev->input_sigs(dut);
-    }
-
-    if(update_ctrl) {
-        ev->ctrl_ptr = ariel_ev->get_rtl_ctrl_ptr(); 
-        ev->ctrl_info = ariel_ev->get_rtl_ctrl_info();
-        ev->control_sigs(dut);
-    }
-
-    if(update_eval_args) {
-        update_registers = *++updated_rtl_params;
-        verbose = *++updated_rtl_params;
-        done_reset = *++updated_rtl_params;
-    }
-
-    sim_done = *++updated_rtl_params;
-
-    uint64_t* dynCycles_ptr = (uint64_t*)(++updated_rtl_params);
-    dynCycles = *dynCycles_ptr;
- 
-    //loading initial values to the RTL design
-    dut->eval(update_registers, verbose, done_reset);
-
-}*/
 
 void Rtlmodel::handleMemEvent(SimpleMem::Request* event) {
     output.verbose(CALL_INFO, 4, 0, " handling a memory event in RtlModel.\n");
@@ -279,25 +256,33 @@ void Rtlmodel::handleMemEvent(SimpleMem::Request* event) {
     if(find_entry != pendingTransactions->end()) {
         output.verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n", (uint32_t) pendingTransactions->size());
        
-        //int index = event->getVirtualAddress() - getBaseDataAddress();
-        int index = getDataAddress() - getBaseDataAddress();
         int i;
-        //Actual reading of data from memEvent and storing it to getDataAddress
-        for(i = 0; i < event->data.size(); i++)
-            getDataAddress()[index+i] = event->data[i]; 
+        auto DataAddress = VA_VA_map.find(event->virtualAddr);
+        if(DataAddress != VA_VA_map.end())
+            setDataAddress((uint8_t*)DataAddress->second);
+        else
+            output.fatal(CALL_INFO, -1, "Error: DataAddress corresponding to VA: %" PRIu64, event->virtualAddr);
 
-        setDataAddress(getDataAddress()+index+i);
-        if(event->getVirtualAddress() == (uint64_t)ev->updated_rtl_params) {
+        //Actual reading of data from memEvent and storing it to getDataAddress
+        output.verbose(CALL_INFO, 1, 0, "\nAddress is: %" PRIu64, (uint64_t)getDataAddress());
+        for(i = 0; i < event->data.size(); i++)
+            getDataAddress()[i] = event->data[i]; 
+
+        if(event->getVirtualAddress() == (uint64_t)updated_rtl_params) {
             bool* ptr = (bool*)getBaseDataAddress();
             output.verbose(CALL_INFO, 1, 0, "Updated Rtl Params is: %d\n",*ptr);
         }
-        //UpdateRtlParams(dataAddress);
 
         pendingTransactions->erase(find_entry);
         pending_transaction_count--;
 
-        if(isStalled && pending_transaction_count == 0)
+        if(isStalled && pending_transaction_count == 0) {
+            ev.UpdateRtlSignals((void*)getBaseDataAddress(), dut, sim_cycle);
+            tickCount = 0;
+            reregisterClock(timeConverter, clock_handler);
+            setDataAddress(getBaseDataAddress());
             isStalled = false;
+        }
     } 
     
     else 
@@ -418,12 +403,10 @@ void Rtlmodel::generateReadRequest(RtlReadEvent* rEv) {
 void Rtlmodel::generateWriteRequest(RtlWriteEvent* wEv) {
 
     const uint64_t writeAddress = wEv->getAddress();
-    fprintf(stderr, "\n Handle Write request generated for VA: %" PRIu64, writeAddress);
     const uint64_t writeLength  = std::min((uint64_t) wEv->getLength(), cacheLineSize); // Trim to cacheline size (occurs rarely for instructions such as xsave and fxsave)
 
     // See note in handleReadRequest() on alignment issues
     const uint64_t physAddr = memmgr->translateAddress(writeAddress);
-    fprintf(stderr, "\n Handle Write request generated for PA: %" PRIu64, physAddr);
     const uint64_t addr_offset  = physAddr % ((uint64_t) cacheLineSize);
 
     // We do not need to perform a split operation

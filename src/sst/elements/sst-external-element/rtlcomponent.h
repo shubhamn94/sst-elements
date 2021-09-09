@@ -19,6 +19,7 @@
 //Header file will be changed to the RTL C-model under test
 #include "rtl_header.h"
 #include <sst/core/link.h>
+#include <sst/core/clock.h>
 #include <sst/core/eli/elementinfo.h>
 #include "rtlevent.h"
 #include "arielrtlev.h"
@@ -51,6 +52,14 @@ public:
 	)
     //Stats needs to be added. Now, stats will be added based on the outputs as mentioned by the user based on the RTL login provided. 
     SST_ELI_DOCUMENT_STATISTICS(
+        { "read_requests",        "Statistic counts number of read requests", "requests", 1},   // Name, Desc, Enable Level
+        { "write_requests",       "Statistic counts number of write requests", "requests", 1},
+        { "read_request_sizes",   "Statistic for size of read requests", "bytes", 1},   // Name, Desc, Enable Level
+        { "write_request_sizes",  "Statistic for size of write requests", "bytes", 1},
+        { "split_read_requests",  "Statistic counts number of split read requests (requests which come from multiple lines)", "requests", 1},
+        { "split_write_requests", "Statistic counts number of split write requests (requests which are split over multiple lines)", "requests", 1},
+	    { "flush_requests",       "Statistic counts instructions which perform flushes", "requests", 1},
+        { "fence_requests",       "Statistic counts instructions which perform fences", "requests", 1}
     )
     //Parameters will mostly be just frequency/clock in the design. User will mention specifically if there could be other parameters for the RTL design which needs to be configured before runtime.  Don't mix RTL input/control signals with SST parameters. SST parameters of RTL design will make the RTL design/C++ model synchronous with rest of the SST full system.   
 	SST_ELI_DOCUMENT_PARAMS(
@@ -62,7 +71,7 @@ public:
     //Default will be single port for communicating with Ariel CPU. Need to see the requirement/use-case of multi-port design and how to incorporate it in our parser tool.  
     SST_ELI_DOCUMENT_PORTS(
         {"ArielRtllink", "Link to the Rtlmodel", { "Rtlmodel.RTLEvent", "" } },
-        {"RtlCacheLink", "Link to Cache", {"memHierarchy.simpleMem" , ""} }
+        {"RtlCacheLink", "Link to Cache", {"memHierarchy.memInterface" , ""} }
     )
     
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
@@ -91,18 +100,24 @@ private:
     Interfaces::SimpleMem* cacheLink;
     void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
     void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length, const uint8_t* payload);
+    void sendArielEvent();
     
     TimeConverter* timeConverter;
+    Clock::HandlerBase* clock_handler;
     bool writePayloads;
     bool update_registers, verbose, done_reset, sim_done;
     bool update_inp, update_ctrl, update_eval_args;
-    RTLEvent *ev;
+    RTLEvent ev;
     Rtlheader *dut;
     AXITop *axiport;
     ArielComponent::ArielRtlEvent* RtlAckEv;
     uint64_t inp_VA, ctrl_VA, updated_rtl_params_VA, inp_PA, ctrl_PA, updated_rtl_params_PA;
     size_t inp_size, ctrl_size, updated_rtl_params_size;
+    void* inp_ptr = nullptr;
+    void* updated_rtl_params = nullptr;
     RtlMemoryManager* memmgr;
+    bool mem_allocated = false;
+    uint64_t sim_cycle;
 
     //AXI Handler signals
     uint64_t axi_tdata_$old, axi_tdata_$next;
@@ -110,6 +125,7 @@ private:
     uint8_t axi_tready_$old, axi_tready_$next;
 
     std::unordered_map<Interfaces::SimpleMem::Request::id_t, Interfaces::SimpleMem::Request*>* pendingTransactions;
+    std::unordered_map<uint64_t, uint64_t> VA_VA_map;
     uint32_t pending_transaction_count;
 
     bool isStalled;

@@ -15,13 +15,13 @@
 
 #include "uint.h"
 #include "sint.h"
-#include "VecShiftRegister_O1.h"
+#include "rtl_header.h"
 #include "rtlevent.h"
 
 using namespace SST;
 using namespace SST::RtlComponent;
 
-void RTLEvent::UpdateRtlSignals(void *update_data, VecShiftRegister* cmodel, uint64_t& cycles) {
+void RTLEvent::UpdateRtlSignals(void *update_data, Rtlheader* cmodel, uint64_t& cycles) {
     bool* update_rtl_params = (bool*)update_data; 
     update_inp = update_rtl_params[0];
     update_ctrl = update_rtl_params[1];
@@ -50,7 +50,7 @@ void RTLEvent::UpdateRtlSignals(void *update_data, VecShiftRegister* cmodel, uin
     }
 }
 
-void RTLEvent::input_sigs(VecShiftRegister* cmodel) {
+void RTLEvent::input_sigs(Rtlheader* cmodel) {
 
     cmodel->reset = UInt<1>(1);
     UInt<4>* rtl_inp_ptr = (UInt<4>*)inp_ptr;
@@ -66,7 +66,7 @@ void RTLEvent::input_sigs(VecShiftRegister* cmodel) {
     return;
 }
 
-void RTLEvent::control_sigs(VecShiftRegister* cmodel) {
+void RTLEvent::control_sigs(Rtlheader* cmodel) {
 
     fprintf(stderr, "\nctrl_sigs called"); 
     cmodel->reset = UInt<1>(1);
