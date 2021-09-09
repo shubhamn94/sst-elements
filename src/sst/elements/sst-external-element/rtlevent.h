@@ -17,7 +17,7 @@
 #define _RTLEVENT_H
 
 #include "uint.h"
-#include "VecShiftRegister_O1.h"
+#include "rtl_header.h"
 #include "mlm.h"
 #include <string>
 #include <sst/core/event.h>
@@ -34,9 +34,9 @@ public:
     RTLEvent() : SST::Event() { }
     dataVec payload;
 
-    void input_sigs(VecShiftRegister*);
-    void control_sigs(VecShiftRegister*);
-    void UpdateRtlSignals(void*, VecShiftRegister*, uint64_t&);
+    void input_sigs(Rtlheader*);
+    void control_sigs(Rtlheader*);
+    void UpdateRtlSignals(void*, Rtlheader*, uint64_t&);
     void *inp_ptr, *ctrl_ptr;
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {

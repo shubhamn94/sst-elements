@@ -11,7 +11,7 @@
 //#define UNLIKELY(condition) __builtin_expect(static_cast<bool>(condition), 0)
 using namespace std;
 
-typedef struct VecShiftRegister {
+typedef struct Rtlheader {
   UInt<4> delays_0;
   UInt<4> delays_1;
   UInt<4> delays_2;
@@ -26,7 +26,7 @@ typedef struct VecShiftRegister {
   UInt<1> io_shift;
   UInt<4> io_out;
 
-  VecShiftRegister() {
+  Rtlheader() {
     delays_0.rand_init();
     delays_1.rand_init();
     delays_2.rand_init();
@@ -55,6 +55,6 @@ typedef struct VecShiftRegister {
     if (update_registers) delays_3 = io_load ? io_ins_3 : _GEN_3;
     if(verbose) cout<<" "<<delays_3<<" "<<delays_2<<" "<<delays_1<<" "<<delays_0<<'\n';
   }
-} VecShiftRegister;
+} Rtlheader;
 
 #endif  // VECSHIFTREGISTER_H_
