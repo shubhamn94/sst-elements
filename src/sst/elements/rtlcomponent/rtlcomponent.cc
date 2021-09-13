@@ -27,7 +27,7 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
     bool found;
     dut = new Rtlheader;
     axiport = new AXITop;
-    RtlAckEv = new ArielComponent::ArielRtlEvent();
+    RtlAckEv = new CPUComponent::CPURtlEvent();
 	output.init("Rtlmodel-" + getName() + "-> ", 1, 0, SST::Output::STDOUT);
 
 	RTLClk  = params.find<std::string>("ExecFreq", "1GHz" , found);
@@ -55,8 +55,8 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
    unregisterClock(timeConverter, clock_handler);
    writePayloads = params.find<int>("writepayloadtrace") == 0 ? false : true;
 
-    //Configure and register Event Handler for ArielRtllink
-   ArielRtlLink = configureLink("ArielRtllink", new Event::Handler<Rtlmodel>(this, &Rtlmodel::handleArielEvent)); 
+    //Configure and register Event Handler for CPURtllink
+   CPURtlLink = configureLink("CPURtllink", new Event::Handler<Rtlmodel>(this, &Rtlmodel::handleCPUEvent)); 
 
     // Find all the components loaded into the "memory" slot
     // Make sure all cores have a loaded subcomponent in their slot
@@ -111,7 +111,7 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
    registerAsPrimaryComponent();
    primaryComponentDoNotEndSim();
 
-   assert(ArielRtlLink);
+   assert(CPURtlLink);
 }
 
 Rtlmodel::~Rtlmodel() {
@@ -133,7 +133,7 @@ void Rtlmodel::finish() {
     free(getBaseDataAddress());
 }
 
-//clockTick will actually execute the RTL design at every cycle based on the input and control signals updated by Ariel CPU or Event Handler.
+//clockTick will actually execute the RTL design at every cycle based on the input and control signals updated by CPU CPU or Event Handler.
 bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
 
     /*uint64_t DUTclk; 
@@ -180,7 +180,7 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
         if(ev.sim_done) {
             output.verbose(CALL_INFO, 1, 0, "OKToEndSim, TickCount %" PRIu64, tickCount);
             RtlAckEv->setEndSim(true);
-            ArielRtlLink->send(RtlAckEv);
+            CPURtlLink->send(RtlAckEv);
             primaryComponentOKToEndSim();  //Tell the SST that it can finish the simulation.
             return true;
         }
@@ -190,10 +190,10 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
         return false;
 }
 
-/*Event Handle will be called by Ariel CPU once it(Ariel CPU) puts the input and control signals in the shared memory. Now, we need to modify Ariel CPU code for that.
+/*Event Handle will be called by CPU CPU once it(Ariel CPU) puts the input and control signals in the shared memory. Now, we need to modify Ariel CPU code for that.
 Event handler will update the input and control signal based on the workload/C program to be executed.
 Don't know what should be the argument of Event handle as of now. As, I think we don't need any argument. It's just a requst/call by Ariel CPU to update input and control signals.*/
-void Rtlmodel::handleArielEvent(SST::Event *event) {
+void Rtlmodel::handleCPUEvent(SST::Event *event) {
     /*
     * Event will pick information from shared memory. (What will be the use of Event queue.)
     * Need to insert code for it. 
@@ -203,9 +203,9 @@ void Rtlmodel::handleArielEvent(SST::Event *event) {
     */
 
     unregisterClock(timeConverter, clock_handler);
-    ArielComponent::ArielRtlEvent* ariel_ev = dynamic_cast<ArielComponent::ArielRtlEvent*>(event);
+    CPUComponent::CPURtlEvent* ariel_ev = dynamic_cast<CPUComponent::CPURtlEvent*>(event);
     RtlAckEv->setEventRecvAck(true);
-    ArielRtlLink->send(RtlAckEv);
+    CPURtlLink->send(RtlAckEv);
 
     output.verbose(CALL_INFO, 1, 0, "\nVecshiftReg RTL Event handle called \n");
 
@@ -222,7 +222,7 @@ void Rtlmodel::handleArielEvent(SST::Event *event) {
     RtlReadEvent* rtlrev_params = new RtlReadEvent((uint64_t)ariel_ev->get_updated_rtl_params(),(uint32_t)ariel_ev->get_updated_rtl_params_size()); 
     RtlReadEvent* rtlrev_inp_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_inp_ptr(),(uint32_t)ariel_ev->get_rtl_inp_size()); 
     RtlReadEvent* rtlrev_ctrl_ptr = new RtlReadEvent((uint64_t)ariel_ev->get_rtl_ctrl_ptr(),(uint32_t)ariel_ev->get_rtl_ctrl_size()); 
-    output.verbose(CALL_INFO, 1, 0, "\nVirtual address in handleArielEvent is: %" PRIu64, (uint64_t)ariel_ev->get_updated_rtl_params());
+    output.verbose(CALL_INFO, 1, 0, "\nVirtual address in handleCPUEvent is: %" PRIu64, (uint64_t)ariel_ev->get_updated_rtl_params());
 
     if(!mem_allocated) {
         size_t size = ariel_ev->get_updated_rtl_params_size() + ariel_ev->get_rtl_inp_size() + ariel_ev->get_rtl_ctrl_size();
@@ -244,15 +244,15 @@ void Rtlmodel::handleArielEvent(SST::Event *event) {
     generateReadRequest(rtlrev_inp_ptr);
     generateReadRequest(rtlrev_ctrl_ptr);
     isStalled = true;
-    sendArielEvent();
+    sendCPUEvent();
 }
 
-void Rtlmodel::sendArielEvent() {
+void Rtlmodel::sendCPUEvent() {
      
-    RtlAckEv = new ArielComponent::ArielRtlEvent();
+    RtlAckEv = new CPUComponent::CPURtlEvent();
     RtlAckEv->RtlData.rtl_inp_ptr = inp_ptr;
     RtlAckEv->RtlData.rtl_inp_size = inp_size;
-    ArielRtlLink->send(RtlAckEv);
+    CPURtlLink->send(RtlAckEv);
     return;
 }
 
