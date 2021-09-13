@@ -11,10 +11,10 @@ AM_CPPFLAGS = \
 	$(FLAGS)
 
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = librtlcomponent.la
-librtlcomponent_la_SOURCES = \
-	rtlcomponent.h \
-	rtlcomponent.cc \
+comp_LTLIBRARIES = libvecshiftreg.la
+libvecshiftreg_la_SOURCES = \
+	vecshiftreg.h \
+	vecshiftreg.cc \
 	rtlevent.h \
 	rtlevent.cc \
 	rtlmemmgr.h \
@@ -24,7 +24,7 @@ librtlcomponent_la_SOURCES = \
 	rtlreadev.h \
 	rtlwriteev.h 
 
-librtlcomponent_la_LDFLAGS = -module -avoid-version
+libvecshiftreg_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE  sst-external-element=$(abs_srcdir)

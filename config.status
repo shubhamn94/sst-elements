@@ -393,7 +393,7 @@ on `(hostname || uname -n) 2>/dev/null | sed 1q`
 "
 
 # Files that config.status was made for.
-config_files=" src/sst/elements/ariel/Makefile src/sst/elements/cacheTracer/Makefile src/sst/elements/cassini/Makefile src/sst/elements/CramSim/Makefile src/sst/elements/ember/Makefile src/sst/elements/firefly/Makefile src/sst/elements/GNA/Makefile src/sst/elements/hermes/Makefile src/sst/elements/kingsley/Makefile src/sst/elements/memHierarchy/Makefile src/sst/elements/merlin/Makefile src/sst/elements/Messier/Makefile src/sst/elements/miranda/Makefile src/sst/elements/Opal/Makefile src/sst/elements/prospero/Makefile src/sst/elements/Samba/Makefile src/sst/elements/scheduler/Makefile src/sst/elements/serrano/Makefile src/sst/elements/shogun/Makefile src/sst/elements/simpleElementExample/Makefile src/sst/elements/simpleSimulation/Makefile src/sst/elements/sst-external-element/Makefile src/sst/elements/thornhill/Makefile src/sst/elements/VaultSimC/Makefile src/sst/elements/zodiac/Makefile Makefile src/Makefile src/sst/Makefile src/sst/elements/Makefile"
+config_files=" src/sst/elements/ariel/Makefile src/sst/elements/cacheTracer/Makefile src/sst/elements/cassini/Makefile src/sst/elements/CramSim/Makefile src/sst/elements/ember/Makefile src/sst/elements/firefly/Makefile src/sst/elements/GNA/Makefile src/sst/elements/hermes/Makefile src/sst/elements/kingsley/Makefile src/sst/elements/memHierarchy/Makefile src/sst/elements/merlin/Makefile src/sst/elements/Messier/Makefile src/sst/elements/miranda/Makefile src/sst/elements/Opal/Makefile src/sst/elements/prospero/Makefile src/sst/elements/rtlcomponent/Makefile src/sst/elements/Samba/Makefile src/sst/elements/scheduler/Makefile src/sst/elements/serrano/Makefile src/sst/elements/shogun/Makefile src/sst/elements/simpleElementExample/Makefile src/sst/elements/simpleSimulation/Makefile src/sst/elements/sst-external-element/Makefile src/sst/elements/thornhill/Makefile src/sst/elements/VaultSimC/Makefile src/sst/elements/zodiac/Makefile Makefile src/Makefile src/sst/Makefile src/sst/elements/Makefile"
 config_headers=" src/sst_element_config.h"
 config_commands=" depfiles libtool"
 
@@ -820,6 +820,7 @@ do
     "src/sst/elements/miranda/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/miranda/Makefile" ;;
     "src/sst/elements/Opal/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/Opal/Makefile" ;;
     "src/sst/elements/prospero/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/prospero/Makefile" ;;
+    "src/sst/elements/rtlcomponent/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/rtlcomponent/Makefile" ;;
     "src/sst/elements/Samba/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/Samba/Makefile" ;;
     "src/sst/elements/scheduler/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/scheduler/Makefile" ;;
     "src/sst/elements/serrano/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/serrano/Makefile" ;;
@@ -909,10 +910,10 @@ S["CC_VERSION"]="gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0"
 S["SSTELEMENTS_GIT_COMMITCOUNT"]="0"
 S["SSTELEMENTS_GIT_HEADSHA"]="-dev"
 S["SSTELEMENTS_GIT_BRANCH"]="N/A"
-S["SST_DIST_ELEMENT_LIBRARIES"]=" ariel cacheTracer cassini CramSim ember firefly GNA hermes kingsley memHierarchy merlin Messier miranda Opal prospero Samba scheduler serrano shogu"\
-"n simpleElementExample simpleSimulation sst-external-element thornhill VaultSimC zodiac"
-S["SST_ACTIVE_ELEMENT_LIBRARIES"]=" ariel cacheTracer cassini CramSim ember firefly GNA hermes kingsley memHierarchy merlin Messier miranda Opal prospero Samba scheduler serrano shogu"\
-"n simpleElementExample simpleSimulation sst-external-element thornhill VaultSimC zodiac"
+S["SST_DIST_ELEMENT_LIBRARIES"]=" ariel cacheTracer cassini CramSim ember firefly GNA hermes kingsley memHierarchy merlin Messier miranda Opal prospero rtlcomponent Samba scheduler "\
+"serrano shogun simpleElementExample simpleSimulation sst-external-element thornhill VaultSimC zodiac"
+S["SST_ACTIVE_ELEMENT_LIBRARIES"]=" ariel cacheTracer cassini CramSim ember firefly GNA hermes kingsley memHierarchy merlin Messier miranda Opal prospero rtlcomponent Samba scheduler "\
+"serrano shogun simpleElementExample simpleSimulation sst-external-element thornhill VaultSimC zodiac"
 S["USE_DUMPI_FALSE"]=""
 S["USE_DUMPI_TRUE"]="#"
 S["DUMPI_LIB"]=""

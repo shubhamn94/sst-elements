@@ -27,7 +27,8 @@ librtlcomponent_la_SOURCES = \
 librtlcomponent_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook:
-	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE  sst-external-element=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) rtlcomponent  rtlcomponent_LIBDIR=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE  rtlcomponent=$(abs_srcdir)
 
 ##########################################################################
 ##########################################################################

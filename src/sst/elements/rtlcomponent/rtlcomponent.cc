@@ -122,6 +122,7 @@ Rtlmodel::~Rtlmodel() {
 
 void Rtlmodel::setup() {
     dut->reset = UInt<1>(1);
+    axiport->reset = UInt<1>(1);
 	output.verbose(CALL_INFO, 1, 0, "Component is being setup.\n");
     
 }
@@ -146,21 +147,36 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
 
     if(!isStalled) {
         dut->eval(ev.update_registers, ev.verbose, ev.done_reset);
-        tickCount++;
+        if(tickCount == 4) {
+            output.verbose(CALL_INFO, 1, 0, "AXI signals changed"); 
+            axi_tvalid_$next = 1;
+            axi_tdata_$next = 34;
+        }
+     tickCount++;
     }
 
     if((axi_tvalid_$old ^ axi_tvalid_$next) || (axi_tdata_$old ^ axi_tdata_$next))  {
-        handleAXISignals();
-        axiport->eval(true, false, false);
+        uint8_t ready = 1;
+        output.verbose(CALL_INFO, 1, 0, "handleAXISignals called"); 
+        if(axiport->queue.maybe_full) 
+            ready = 0;
+        handleAXISignals(ready); 
+        axiport->eval(true, true, true);
     }
 
     axi_tdata_$old = axi_tdata_$next;
     axi_tvalid_$old = axi_tvalid_$next;
     axi_tready_$old = axi_tready_$next;
 
+    fifo_enq_$next = axiport->queue.value.as_single_word();
+    if(fifo_enq_$old ^ fifo_deq_$next)
+        cout<<"Data enqueued in the queue" << axiport->queue.ram[fifo_enq_$next];
+    fifo_enq_$old = fifo_deq_$next;
 
-	if( tickCount >= dynCycles || tickCount >= maxCycles ) {
-        output.verbose(CALL_INFO, 1, 0, "sim_cycle ending is: %" PRIu64, sim_cycle);
+    cout<<"Sim Done is: "<<ev.sim_done;
+
+	if( tickCount >= sim_cycle /*|| tickCount >= maxCycles*/ ) {
+        //output.verbose(CALL_INFO, 1, 0, "sim_cycle ending is: %" PRIu64, sim_cycle);
         if(ev.sim_done) {
             output.verbose(CALL_INFO, 1, 0, "OKToEndSim, TickCount %" PRIu64, tickCount);
             RtlAckEv->setEndSim(true);
@@ -185,6 +201,8 @@ void Rtlmodel::handleArielEvent(SST::Event *event) {
     * void pointers will be defined by Ariel CPU and passed as parameters through SST::Event to the C++ model. 
     * As of now, shared memory is like a scratch-pad or heap which is passive without any intelligent performance improving stuff like TLB, Cache hierarchy, accessing mechanisms(VIPT/PIPT) etc.  
     */
+
+    unregisterClock(timeConverter, clock_handler);
     ArielComponent::ArielRtlEvent* ariel_ev = dynamic_cast<ArielComponent::ArielRtlEvent*>(event);
     RtlAckEv->setEventRecvAck(true);
     ArielRtlLink->send(RtlAckEv);
@@ -239,13 +257,13 @@ void Rtlmodel::sendArielEvent() {
 }
 
 
-void Rtlmodel::handleAXISignals() {
+void Rtlmodel::handleAXISignals(uint8_t tready) {
     axiport->readerFrontend.done = 0;
     axiport->readerFrontend.enable = 1;
     axiport->readerFrontend.length = 64;
     axiport->io_read_tdata = axi_tdata_$next; 
     axiport->io_read_tvalid = axi_tvalid_$next; 
-    axiport->io_read_tready = axi_tready_$next; 
+    axiport->io_read_tready = tready; 
     //axiport->cmd_queue.push('r');
 }
 
@@ -300,10 +318,6 @@ void Rtlmodel::commitReadEvent(const uint64_t address,
         pending_transaction_count++;
         pendingTransactions->insert(std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req));
 
-        /*if(enableTracing) {
-                printTraceEntry(true, (const uint64_t) req->addrs[0], (const uint32_t) length);
-        }*/
-
         // Actually send the event to the cache
         cacheLink->sendRequest(req);
     }
@@ -317,7 +331,6 @@ void Rtlmodel::commitWriteEvent(const uint64_t address,
         req->setVirtualAddress(virtAddress);
 
         if( writePayloads ) {
-            //if(verbosity >= 16) {
                 char* buffer = new char[64];
                 std::string payloadString = "";
                 for(int i = 0; i < length; ++i) {
@@ -329,16 +342,11 @@ void Rtlmodel::commitWriteEvent(const uint64_t address,
 
                 output.verbose(CALL_INFO, 16, 0, "Write-Payload: Len=%" PRIu32 ", Data={ %s } %p\n",
                         length, payloadString.c_str(), (void*)virtAddress);
-            //}
             req->setPayload( (uint8_t*) payload, length );
         }
         
         pending_transaction_count++;
         pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
-        
-        /*if(enableTracing) {
-            printTraceEntry(false, (const uint64_t) req->addrs[0], (const uint32_t) length);
-        }*/
 
         // Actually send the event to the cache
         cacheLink->sendRequest(req);

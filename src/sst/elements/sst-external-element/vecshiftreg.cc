@@ -11,9 +11,9 @@
 
 #include <sst/core/sst_config.h>
 #include <sst/core/event.h>
+#include "VecShiftRegister_O1.h"
 #include "vecshiftreg.h"
 #include "rtlevent.h"
-#include "VecShiftRegister_O1.h"
 #include "rtlmemmgr.h"
 #include <deque>
 

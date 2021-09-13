@@ -20883,6 +20883,11 @@ fi
 
    dist_element_libraries="$dist_element_libraries prospero"
 
+   active_element_libraries="$active_element_libraries rtlcomponent"
+   ac_config_files="$ac_config_files src/sst/elements/rtlcomponent/Makefile"
+
+   dist_element_libraries="$dist_element_libraries rtlcomponent"
+
 
   sst_samba_comp_happy="yes"
 if test "x$sst_samba_comp_happy" = "xyes"; then :
@@ -23048,6 +23053,7 @@ do
     "src/sst/elements/miranda/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/miranda/Makefile" ;;
     "src/sst/elements/Opal/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/Opal/Makefile" ;;
     "src/sst/elements/prospero/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/prospero/Makefile" ;;
+    "src/sst/elements/rtlcomponent/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/rtlcomponent/Makefile" ;;
     "src/sst/elements/Samba/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/Samba/Makefile" ;;
     "src/sst/elements/scheduler/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/scheduler/Makefile" ;;
     "src/sst/elements/serrano/Makefile") CONFIG_FILES="$CONFIG_FILES src/sst/elements/serrano/Makefile" ;;

@@ -44,7 +44,7 @@ public:
 
 	SST_ELI_REGISTER_COMPONENT(
 		Rtlmodel,
-		"rtlmodel",
+		"rtlcomponent",
 		"Rtlmodel",
 		SST_ELI_ELEMENT_VERSION( 1, 0, 0 ),
 		"Demonstration of an External Element for SST",
@@ -95,7 +95,7 @@ private:
 
     void handleArielEvent(SST::Event *ev);
     void handleMemEvent(Interfaces::SimpleMem::Request* event);
-    void handleAXISignals();
+    void handleAXISignals(uint8_t);
     SST::Link* ArielRtlLink;
     Interfaces::SimpleMem* cacheLink;
     void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
@@ -120,9 +120,12 @@ private:
     uint64_t sim_cycle;
 
     //AXI Handler signals
-    uint64_t axi_tdata_$old, axi_tdata_$next;
-    uint8_t axi_tvalid_$old, axi_tvalid_$next;
-    uint8_t axi_tready_$old, axi_tready_$next;
+    uint64_t axi_tdata_$old = 0, axi_tdata_$next = 0;
+    uint8_t axi_tvalid_$old = 0, axi_tvalid_$next = 0;
+    uint8_t axi_tready_$old = 0, axi_tready_$next = 0;
+    uint64_t axi_fifo_enq_$old = 0, axi_fifo_enq_$next = 0;
+    uint64_t fifo_enq_$old = 0, fifo_enq_$next = 0;
+    uint64_t fifo_deq_$old = 0, fifo_deq_$next = 0;
 
     std::unordered_map<Interfaces::SimpleMem::Request::id_t, Interfaces::SimpleMem::Request*>* pendingTransactions;
     std::unordered_map<uint64_t, uint64_t> VA_VA_map;
