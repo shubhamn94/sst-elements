@@ -149,7 +149,7 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
         dut->eval(ev.update_registers, ev.verbose, ev.done_reset);
         if(tickCount == 4) {
             output.verbose(CALL_INFO, 1, 0, "AXI signals changed"); 
-            axi_tvalid_$next = 1;
+            axi_tvalid_$next = 2;
             axi_tdata_$next = 34;
         }
      tickCount++;
@@ -173,6 +173,12 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
         cout<<"Data enqueued in the queue" << axiport->queue.ram[fifo_enq_$next];
     fifo_enq_$old = fifo_deq_$next;
 
+    uint64_t read_addr = axiport->queue.ram[fifo_enq_$next];
+    uint64_t size = axiport->queue.ram[fifo_enq_$next+1];
+
+    RtlReadEvent* axi_readev = new RtlReadEvent(read_addr, size); 
+    generateReadRequest(axi_readev);
+
     cout<<"Sim Done is: "<<ev.sim_done;
 
 	if( tickCount >= sim_cycle /*|| tickCount >= maxCycles*/ ) {
@@ -189,6 +195,7 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
     else 
         return false;
 }
+
 
 /*Event Handle will be called by CPU CPU once it(Ariel CPU) puts the input and control signals in the shared memory. Now, we need to modify Ariel CPU code for that.
 Event handler will update the input and control signal based on the workload/C program to be executed.
@@ -247,6 +254,52 @@ void Rtlmodel::handleCPUEvent(SST::Event *event) {
     sendCPUEvent();
 }
 
+void Rtlmodel::handleAXIEvent(uint64_t* data) {
+    //axi4 Writer configuration, writes data to the destination address
+    axiport->io_write_aw_awid = 0;
+    axiport->writerFrontend.enable      = 0;    
+    axiport->writerFrontend.length      = 64;
+    axiport->writerFrontend.awaddr      = (uint64_t)destination_address;
+    axiport->writerFrontend.awlen       = 64;
+    axiport->writerFrontend.awvalid     = 1;
+    axiport->writerFrontend.bready      = 0;
+    axiport->writerFrontend.done        = 0;
+    axiport->writerFrontend.addrState   = axi_w_addr_state; //use globally visible state in the FSM
+    axiport->writerFrontend.dataState   = axi_w_data_state; //use globally visible state in the FSM
+    cout<<"axiport->io_read_tdata -->:"<<axiport->io_read_tdata<<endl;
+    
+    cmd_queue.push('r');
+
+    for(int j = 0; j<2 ;j++)
+    {
+        //mem_print(source_address, 8);
+        //mem_print(destination_address, 8);
+        //source_address++;
+        //destination_address++;
+        //logic for sending 2 32-bit addresses here
+        axiport->io_write_aw_awid = 0;        
+
+
+
+        //this is a 32 bit dma request
+        for(int i=0; i<2; i++)
+        {
+            req_result = dma_write_req(data[0], data[i]);
+            axiport->eval(true, true, true);
+            //current logic considers 
+            destination_address = (uint64_t*)&axiport->io_write_w_wdata;
+            trace_count++;
+        }
+            
+            *source_address = *source_address>>16;
+            axiport->io_write_aw_awid = 1 ;//tells the ID of the packet
+            cout<<"Request result!     "<< ((req_result == 1)? ("passed"): ("failed"))<<endl;
+            cout<<"data from the chisel design : "<<sizeof(axiport->io_write_w_wdata)<<endl;
+            
+    }
+    
+}
+
 void Rtlmodel::sendCPUEvent() {
      
     RtlAckEv = new CPUComponent::CPURtlEvent();
@@ -289,6 +342,12 @@ void Rtlmodel::handleMemEvent(SimpleMem::Request* event) {
         if(event->getVirtualAddress() == (uint64_t)updated_rtl_params) {
             bool* ptr = (bool*)getBaseDataAddress();
             output.verbose(CALL_INFO, 1, 0, "Updated Rtl Params is: %d\n",*ptr);
+        }
+        
+        if(pending_transaction_count != 0 && event->id = axi_id) {
+            for(i = 0; i < event->data.size(); i++)
+                getDataAddress()[i] = event->data[i]; 
+            handleAXIEvent(getAXIDataAddress());
         }
 
         pendingTransactions->erase(find_entry);
@@ -474,6 +533,11 @@ void Rtlmodel::generateWriteRequest(RtlWriteEvent* wEv) {
 uint8_t* Rtlmodel::getDataAddress() {
     return dataAddress;
 }
+
+uint64_t* Rtlmodel::getAXIDataAddress() {
+    return AXIdataAddress;
+}
+
 
 void Rtlmodel::setDataAddress(uint8_t* virtAddress){
     dataAddress = virtAddress;

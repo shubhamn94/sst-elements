@@ -96,6 +96,7 @@ private:
     void handleCPUEvent(SST::Event *ev);
     void handleMemEvent(Interfaces::SimpleMem::Request* event);
     void handleAXISignals(uint8_t);
+    void handleAXIEvent(uint64_t*);
     SST::Link* CPURtlLink;
     Interfaces::SimpleMem* cacheLink;
     void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
@@ -113,6 +114,7 @@ private:
     CPUComponent::CPURtlEvent* RtlAckEv;
     uint64_t inp_VA, ctrl_VA, updated_rtl_params_VA, inp_PA, ctrl_PA, updated_rtl_params_PA;
     size_t inp_size, ctrl_size, updated_rtl_params_size;
+    std::queue<char> cmd_queue;
     void* inp_ptr = nullptr;
     void* updated_rtl_params = nullptr;
     RtlMemoryManager* memmgr;
