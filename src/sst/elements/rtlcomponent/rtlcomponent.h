@@ -15,6 +15,7 @@
 #include <sst/core/component.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/timeConverter.h>
+#include <queue>
 
 //Header file will be changed to the RTL C-model under test
 #include "rtl_header.h"
@@ -93,15 +94,18 @@ private:
     std::string RTLClk;
 	SST::Cycle_t maxCycles;
 
+    //SST Links
+    SST::Link* ArielRtlLink;
+    Interfaces::SimpleMem* cacheLink;
+
     void handleArielEvent(SST::Event *ev);
     void handleMemEvent(Interfaces::SimpleMem::Request* event);
     void handleAXISignals(uint8_t);
-    void handleAXIEvent(uint64_t*);
-    SST::Link* ArielRtlLink;
-    Interfaces::SimpleMem* cacheLink;
+    //void handleAXIEvent(uint64_t*);
     void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
     void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length, const uint8_t* payload);
     void sendArielEvent();
+    uint64_t* getAXIDataAddress();
     
     TimeConverter* timeConverter;
     Clock::HandlerBase* clock_handler;

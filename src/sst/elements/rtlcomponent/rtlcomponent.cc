@@ -111,7 +111,7 @@ Rtlmodel::Rtlmodel(SST::ComponentId_t id, SST::Params& params) :
    registerAsPrimaryComponent();
    primaryComponentDoNotEndSim();
 
-   assert(CPURtlLink);
+   assert(ArielRtlLink);
 }
 
 Rtlmodel::~Rtlmodel() {
@@ -254,7 +254,7 @@ void Rtlmodel::handleArielEvent(SST::Event *event) {
     sendArielEvent();
 }
 
-void Rtlmodel::handleAXIEvent(uint64_t* data) {
+/*void Rtlmodel::handleAXIEvent(uint64_t* data) {
     //axi4 Writer configuration, writes data to the destination address
     axiport->io_write_aw_awid = 0;
     axiport->writerFrontend.enable      = 0;    
@@ -298,7 +298,7 @@ void Rtlmodel::handleAXIEvent(uint64_t* data) {
             
     }
     
-}
+}*/
 
 void Rtlmodel::sendArielEvent() {
      
@@ -344,11 +344,11 @@ void Rtlmodel::handleMemEvent(SimpleMem::Request* event) {
             output.verbose(CALL_INFO, 1, 0, "Updated Rtl Params is: %d\n",*ptr);
         }
         
-        if(pending_transaction_count != 0 && event->id = axi_id) {
+        /*if(pending_transaction_count != 0 && event->id = axi_id) {
             for(i = 0; i < event->data.size(); i++)
                 getDataAddress()[i] = event->data[i]; 
             handleAXIEvent(getAXIDataAddress());
-        }
+        }*/
 
         pendingTransactions->erase(find_entry);
         pending_transaction_count--;
