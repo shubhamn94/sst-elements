@@ -70,7 +70,7 @@ public:
 
     //Default will be single port for communicating with Ariel CPU. Need to see the requirement/use-case of multi-port design and how to incorporate it in our parser tool.  
     SST_ELI_DOCUMENT_PORTS(
-        {"CPURtllink", "Link to the Rtlmodel", { "Rtlmodel.RTLEvent", "" } },
+        {"ArielRtllink", "Link to the Rtlmodel", { "Rtlmodel.RTLEvent", "" } },
         {"RtlCacheLink", "Link to Cache", {"memHierarchy.memInterface" , ""} }
     )
     
@@ -93,15 +93,15 @@ private:
     std::string RTLClk;
 	SST::Cycle_t maxCycles;
 
-    void handleCPUEvent(SST::Event *ev);
+    void handleArielEvent(SST::Event *ev);
     void handleMemEvent(Interfaces::SimpleMem::Request* event);
     void handleAXISignals(uint8_t);
     void handleAXIEvent(uint64_t*);
-    SST::Link* CPURtlLink;
+    SST::Link* ArielRtlLink;
     Interfaces::SimpleMem* cacheLink;
     void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
     void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length, const uint8_t* payload);
-    void sendCPUEvent();
+    void sendArielEvent();
     
     TimeConverter* timeConverter;
     Clock::HandlerBase* clock_handler;
@@ -111,7 +111,7 @@ private:
     RTLEvent ev;
     Rtlheader *dut;
     AXITop *axiport;
-    CPUComponent::CPURtlEvent* RtlAckEv;
+    ArielComponent::ArielRtlEvent* RtlAckEv;
     uint64_t inp_VA, ctrl_VA, updated_rtl_params_VA, inp_PA, ctrl_PA, updated_rtl_params_PA;
     size_t inp_size, ctrl_size, updated_rtl_params_size;
     std::queue<char> cmd_queue;
