@@ -26,8 +26,8 @@ vecShiftReg::vecShiftReg(SST::ComponentId_t id, SST::Params& params) :
 	SST::Component(id)/*, verbosity(static_cast<uint32_t>(out->getVerboseLevel()))*/ {
 
     bool found;
-    cmodel = new VecShiftRegister;
     RtlAckEv = new ArielComponent::ArielRtlEvent();
+    cmodel = new VecShiftRegister;
 	output.init("vecShiftReg-" + getName() + "-> ", 1, 0, SST::Output::STDOUT);
 
 	RTLClk  = params.find<std::string>("ExecFreq", "1GHz" , found);
@@ -116,7 +116,6 @@ vecShiftReg::vecShiftReg(SST::ComponentId_t id, SST::Params& params) :
 vecShiftReg::~vecShiftReg() {
     output.verbose(CALL_INFO, 1, 0, "vecShiftReg destructor called!");
     delete cmodel;
-    delete RtlAckEv;
 }
 
 void vecShiftReg::setup() {
@@ -148,6 +147,8 @@ bool vecShiftReg::clockTick( SST::Cycle_t currentCycle ) {
 		output.verbose(CALL_INFO, 1, 0, "Hello World!\n");
 	}*/
 
+    
+    output.verbose(CALL_INFO, 1, 0, "Current Cycle is: %d", currentCycle);
     if(!isStalled) {
         //output.verbose(CALL_INFO, 1, 0, "\nClockTick from vecShiftReg is called. isStalled is: %d", isStalled);
         cmodel->eval(ev.update_registers, ev.verbose, ev.done_reset);
@@ -157,6 +158,10 @@ bool vecShiftReg::clockTick( SST::Cycle_t currentCycle ) {
         output.verbose(CALL_INFO, 1, 0, "TickCount is: %" PRIu64, tickCount);
 
         tickCount++;
+    }
+    else {
+
+        output.verbose(CALL_INFO, 1, 0, "\n\nDUT is Stalled!! \n");
     }
 
 	if(tickCount >= sim_cycle /*|| tickCount >= maxCycles*/) {
@@ -187,6 +192,7 @@ void vecShiftReg::handleArielEvent(SST::Event *event) {
     */
     unregisterClock(timeConverter, clock_handler);
     ArielComponent::ArielRtlEvent* ariel_ev = dynamic_cast<ArielComponent::ArielRtlEvent*>(event);
+    //RtlAckEv = new ArielComponent::ArielRtlEvent();
     RtlAckEv->setEventRecvAck(true);
     ArielRtlLink->send(RtlAckEv);
 
@@ -226,6 +232,7 @@ void vecShiftReg::handleArielEvent(SST::Event *event) {
     generateReadRequest(rtlrev_ctrl_ptr);
     isStalled = true;
     sendArielEvent();
+    //delete ariel_ev;
 }
 
 void vecShiftReg::sendArielEvent() {

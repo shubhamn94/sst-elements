@@ -124,7 +124,10 @@ void Rtlmodel::setup() {
     dut->reset = UInt<1>(1);
     axiport->reset = UInt<1>(1);
 	output.verbose(CALL_INFO, 1, 0, "Component is being setup.\n");
-    
+    for(int i = 0; i < 512; i++)
+        axiport->queue.ram[i] = 0;
+    axiport->eval(true,true,true);
+    axiport->reset = UInt<1>(0);
 }
 
 //Nothing to add in finish as of now. Need to see what could be added.
@@ -149,8 +152,9 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
         dut->eval(ev.update_registers, ev.verbose, ev.done_reset);
         if(tickCount == 4) {
             output.verbose(CALL_INFO, 1, 0, "AXI signals changed"); 
-            axi_tvalid_$next = 2;
+            axi_tvalid_$next = 1;
             axi_tdata_$next = 34;
+            cout<<"\n Sending data at tickCount 4";
         }
      tickCount++;
     }
@@ -162,22 +166,35 @@ bool Rtlmodel::clockTick( SST::Cycle_t currentCycle ) {
             ready = 0;
         handleAXISignals(ready); 
         axiport->eval(true, true, true);
+
+        //Initial value of AXI control signals
+        fifo_enq_$old = axiport->queue.value_1.as_single_word();
+        fifo_enq_$next = axiport->queue.value.as_single_word();
+        uint64_t prev_data = axiport->queue.ram[fifo_enq_$old].as_single_word();
+
+        while(!(prev_data ^ axiport->queue.ram[fifo_enq_$next].as_single_word())) {
+            prev_data = axiport->queue.ram[fifo_enq_$next].as_single_word();
+            axiport->eval(true, true, true);
+            fifo_enq_$next = axiport->queue.value.as_single_word();
+            if(fifo_enq_$old ^ fifo_enq_$next) {
+                cout<<"\nQueue_value is: "<<axiport->queue.value<<fifo_enq_$next;
+                cout<<"\nData enqueued in the queue: "<< axiport->queue.ram[fifo_enq_$next];
+            }
+            fifo_enq_$old = fifo_enq_$next;
+        }
     }
 
     axi_tdata_$old = axi_tdata_$next;
     axi_tvalid_$old = axi_tvalid_$next;
     axi_tready_$old = axi_tready_$next;
 
-    fifo_enq_$next = axiport->queue.value.as_single_word();
-    if(fifo_enq_$old ^ fifo_deq_$next)
-        cout<<"Data enqueued in the queue" << axiport->queue.ram[fifo_enq_$next];
-    fifo_enq_$old = fifo_deq_$next;
+    uint64_t read_addr = (axiport->queue.ram[fifo_enq_$next].as_single_word());// << 32) | (axiport->queue.ram[fifo_enq_$next+1].as_single_word());
+    uint64_t size = (axiport->queue.ram[fifo_enq_$next+2].as_single_word());// << 32) | (axiport->queue.ram[fifo_enq_$next+3].as_single_word());
+    cout << "\nread_addr is: "<<read_addr;
+    cout << "\nsize is: "<<size;
 
-    uint64_t read_addr = axiport->queue.ram[fifo_enq_$next];
-    uint64_t size = axiport->queue.ram[fifo_enq_$next+1];
-
-    RtlReadEvent* axi_readev = new RtlReadEvent(read_addr, size); 
-    generateReadRequest(axi_readev);
+    //RtlReadEvent* axi_readev = new RtlReadEvent(read_addr, size); 
+    //generateReadRequest(axi_readev);
 
     cout<<"Sim Done is: "<<ev.sim_done;
 

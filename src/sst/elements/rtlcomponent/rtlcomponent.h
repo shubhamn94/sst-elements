@@ -140,6 +140,7 @@ private:
     bool isStalled;
     uint64_t cacheLineSize;
     uint8_t *dataAddress, *baseDataAddress;
+    uint64_t *AXIdataAddress; 
     
     Statistic<uint64_t>* statReadRequests;
     Statistic<uint64_t>* statWriteRequests;

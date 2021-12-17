@@ -42,8 +42,8 @@ typedef struct Rtlheader {
   }
 
   void eval(bool update_registers, bool verbose, bool done_reset) {
-    fprintf(stderr, "Inputs are: % % % % % %" PRIu8 PRIu8 PRIu8 PRIu8 PRIu8 PRIu8, io_ins_0, io_ins_1, io_ins_2, io_ins_3, io_shift, io_load); 
-    fprintf(stderr, "Ctrls are: %d %d", io_shift, io_load); 
+    fprintf(stderr, "\nInputs are: % % % % % %" PRIu8 PRIu8 PRIu8 PRIu8 PRIu8 PRIu8, io_ins_0, io_ins_1, io_ins_2, io_ins_3, io_shift, io_load); 
+    fprintf(stderr, "\nCtrls are: %d %d", io_shift, io_load); 
     UInt<4> _GEN_0 = io_shift ? io_ins_0 : delays_0;
     UInt<4> _GEN_1 = io_shift ? delays_0 : delays_1;
     UInt<4> _GEN_2 = io_shift ? delays_1 : delays_2;

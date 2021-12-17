@@ -2,7 +2,7 @@ import sst
 import os
 
 clock = "1GHz"
-sst.setProgramOption("timebase", "2ps")
+sst.setProgramOption("timebase", "0.5ps")
 
 sst_root = os.getenv( "SST_ROOT" )
 #app = "/home/shubham/ECE633_Independent_Project/shubham/sst-tools/tools/ariel/femlm/examples/stream/mlmstream" 
@@ -33,13 +33,13 @@ memmgr = ariel.setSubComponent("memmgr", "ariel.MemoryManagerSimple")
 
 corecount = 1;
 
-rtl = sst.Component("vecshiftregister", "vecshiftreg.vecShiftReg")
+rtl = sst.Component("rtlaximodel", "rtlcomponent.Rtlmodel")
 rtl.addParams({
         "ExecFreq" : "1GHz",
         "maxCycles" : "100"
 	})
 
-rtlmemmgr = rtl.setSubComponent("memmgr", "vecshiftregister.MemoryManagerSimple")
+rtlmemmgr = rtl.setSubComponent("memmgr", "rtlaximodel.MemoryManagerSimple")
 
 l1cpucache = sst.Component("l1cpucache", "memHierarchy.Cache")
 l1cpucache.addParams({
